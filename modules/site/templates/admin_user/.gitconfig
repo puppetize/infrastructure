@@ -1,0 +1,7 @@
+[user]
+<% if fullname and fullname != :undef -%>
+name = <%= fullname %>
+<% end -%>
+<% if email and email != :undef -%>
+email = <%= email %>
+<% end -%>
