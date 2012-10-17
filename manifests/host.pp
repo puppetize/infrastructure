@@ -4,6 +4,9 @@ package { 'rubygems':
 
 file { '/etc/profile.d/gem.sh':
   ensure  => present,
+  mode    => '0444',
+  owner   => 'root',
+  group   => 'root',
   source  => 'puppet:///modules/site/gem.sh',
   require => Package['rubygems']
 }
@@ -17,6 +20,8 @@ $iptables_conf = '/etc/iptables.conf'
 file { $iptables_conf:
   ensure => present,
   mode   => '0444',
+  owner  => 'root',
+  group  => 'root',
   source => 'puppet:///modules/site/iptables.conf',
   notify => Exec['iptables-restore']
 }
@@ -29,12 +34,17 @@ exec { 'iptables-restore':
 file { '/etc/network/if-up.d/iptables':
   ensure  => present,
   mode    => '0555',
+  owner   => 'root',
+  group   => 'root',
   content => "#!/bin/sh\niptables-restore < ${iptables_conf}\n"
 }
 
 file { '/etc/rc.local':
   ensure => present,
-  source => 'puppet:///modules/site/rc.local'
+  source => 'puppet:///modules/site/rc.local',
+  mode   => '0555',
+  owner  => 'root',
+  group  => 'root'
 }
 
 package { 'sudo':

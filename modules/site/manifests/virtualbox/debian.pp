@@ -27,6 +27,9 @@ class site::virtualbox::debian(
     # Manage the configuration file for the virtualbox initscript.
     file { '/etc/default/virtualbox':
       ensure  => present,
+      mode    => '0444',
+      owner   => 'root',
+      group   => 'root',
       source  => $default,
       require => Package[$package_name]
     }

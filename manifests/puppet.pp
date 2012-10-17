@@ -4,6 +4,9 @@ $_fqdn = "${_hostname}.${_domain}"
 
 file { '/etc/hostname':
   ensure  => present,
+  mode    => '0444',
+  owner   => 'root',
+  group   => 'root',
   content => "${_fqdn}\n",
   notify  => Exec['change-hostname']
 }
@@ -43,6 +46,9 @@ package { 'apache2':
 
 file { '/var/www/index.html':
   ensure  => present,
+  mode    => '0444',
+  owner   => 'root',
+  group   => 'root',
   require => Package['apache2'],
   before  => Service['apache2'],
   content => "<h1>Huh?</h1><p><a href=\"https://github.com/puppetize\">https://github.com/puppetize</a></p>"
