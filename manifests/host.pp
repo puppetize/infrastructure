@@ -95,5 +95,8 @@ package { 'ruby-dev':
 package { 'redcarpet':
   provider => gem,
   ensure   => '2.2.0',
-  require  => Package['ruby-dev']
+  require  => [
+    Package['rubygems'],
+    Package['ruby-dev']
+  ]
 }
