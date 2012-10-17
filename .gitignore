@@ -1,2 +1,4 @@
 # Vagrant state files
 boxes/*/.vagrant
+# Log files for automatically booted boxes
+boxes/*/up.log
