@@ -59,3 +59,5 @@ file { '/home/vagrant/.vimrc':
   owner   => 'vagrant',
   content => "syntax on\n"
 }
+
+include site::vim-puppet

@@ -48,23 +48,7 @@ site::admin_user { 'uwe':
   rsakey   => 'AAAAB3NzaC1yc2EAAAADAQABAAABAQCz0aG1szSSeNCBkz7AiZRgU4Dl63i+C7oBnq3s84mWvhkqJHYH6GsAH2FxCMSr1ETPLIot7YuOWmal+u2Fd25CfQh9AqIjxQAKQBWCJfQTsfnVQHGFJsbHFfn7fjZtDFKEAyjszP5bw/DP8mJhaJ252dvm0xiHB5UrxJ02WK+zrRiqSPrVphu4FPyyyHGFWbEkSD4p4mmmmMjjOTtqON5zu2jXrXD3UqTxZhJh+JcLD8ImYzpogzEaQy6GqM0MnMRtBS0g+eRXRIrW4T1g26ILhWkzCIfdIDnXPnBWQ79Y3Nu8STNxY8xPBPL05o3CFAaeg7+QLB6lNQcR2E2HFOYd'
 }
 
-## development: puppet support for vim
-
-package { 'vim-puppet':
-  ensure => installed
-}
-
-exec { 'install-vim-puppet-addon':
-  command => '/usr/bin/vim-addons -w install puppet',
-  creates => '/var/lib/vim/addons/syntax/puppet.vim',
-  require => Package['vim-puppet']
-}
-
-file { '/etc/vim/vimrc.local':
-  ensure  => present,
-  mode    => '0444',
-  content => "syntax on\n"
-}
+include site::vim-puppet
 
 ## development: stuff I installed to preview README.md
 
