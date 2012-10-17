@@ -21,7 +21,7 @@ file { '/etc/profile.d/gem.sh':
 #  physical
 #  vagrant@squeeze32:~$ facter --version
 #  1.5.7
-if $hardwareisa == 'unknown' or $virtual != 'physical' {
+if $virtual != 'physical' or "${physicalprocessorcount}" == '0' {
   $virtualbox_ose = true
 } else {
   $virtualbox_ose = false
