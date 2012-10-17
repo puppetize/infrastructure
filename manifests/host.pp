@@ -1,15 +1,4 @@
-package { 'rubygems':
-  ensure => installed
-}
-
-file { '/etc/profile.d/gem.sh':
-  ensure  => present,
-  mode    => '0444',
-  owner   => 'root',
-  group   => 'root',
-  source  => 'puppet:///modules/site/gem.sh',
-  require => Package['rubygems']
-}
+include site::rubygems
 
 # FIXME: So wrong, but makes "vagrant up" work on a plain Debian system
 # in a virtual machine and "puppet apply" on a physical box at Hetzner.
