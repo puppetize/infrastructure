@@ -12,11 +12,15 @@
 # By default this script does nothing.
 
 VAGRANT=`gem environment gemdir`/bin/vagrant
+VAGRANT_BOXES_DIR=/home/vagrant/infrastructure/boxes
+VAGRANT_AUTOBOOT='puppet'
+VAGRANT_USER=vagrant
 
 if [ -x $VAGRANT ]; then
-	for box in puppet; do
-		cd /root/vagrant-boxes/$box || continue
-		HOME=/root $VAGRANT up > up.log 2>&1 || true
+	for box in $VAGRANT_AUTOBOOT; do
+		if ! su -l -c "cd $VAGRANT_BOXES_DIR/$box && $VAGRANT up > up.log 2>&1" $VAGRANT_USER; then
+			echo "ERROR: Failed to start Vagrant box '$box'"
+		fi
 	done
 fi
 
