@@ -11,8 +11,28 @@ file { '/etc/profile.d/gem.sh':
   require => Package['rubygems']
 }
 
-include site::vagrant
+# FIXME: So wrong, but makes "vagrant up" work on a plain Debian system
+# in a virtual machine and "puppet apply" on a physical box at Hetzner.
+#
+# To make things more complicated, the 'virtual' fact is broken in my
+# squeeze base box:
+#
+#  vagrant@squeeze32:~$ facter virtual
+#  physical
+#  vagrant@squeeze32:~$ facter --version
+#  1.5.7
+if $hardwareisa == 'unknown' or $virtual != 'physical' {
+  $virtualbox_ose = true
+} else {
+  $virtualbox_ose = false
+}
+
+class { 'site::virtualbox::debian':
+  ose => $virtualbox_ose
+}
+
 include site::virtualbox
+include site::vagrant
 
 $iptables_conf = '/etc/iptables.conf'
 
