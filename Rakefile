@@ -10,3 +10,68 @@ file 'README.html' => 'README.md' do |task|
     file.write(Markdown.new(Render::HTML).render(File.read("README.md")))
   end
 end
+
+# List essential boxes here.
+boxes = ['puppet']
+
+namespace :vagrant do
+  desc "Start Vagrant boxes"
+  task :up do
+    vagrant_up(boxes)
+  end
+
+  desc "Stop Vagrant boxes"
+  task :halt do
+    vagrant_halt(boxes)
+  end
+end
+
+def vagrant_up(boxes)
+  boxes.each do |box|
+    Dir.chdir("boxes/#{box}") do
+      puts "Starting Vagrant box '#{box}'"
+      unless system('vagrant up')
+        raise "Failed to start #{box} box: 'vagrant up' returned #{$?.exitstatus}"
+      end
+    end
+  end
+end
+
+def vagrant_halt(boxes)
+  boxes.each do |box|
+    Dir.chdir("boxes/#{box}") do
+      puts "Stopping Vagrant box '#{box}'"
+      unless system('vagrant halt')
+        raise "Failed to stop #{box} box: 'vagrant halt' returned #{$?.exitstatus}"
+      end
+    end
+  end
+end
+
+def vagrant_provision(boxes)
+  boxes.each do |box|
+    Dir.chdir("boxes/#{box}") do
+      puts "Provisioning Vagrant box '#{box}'"
+      unless system('vagrant provision')
+        raise "Failed to provision #{box} box: 'vagrant provision' returned #{$?.exitstatus}"
+      end
+    end
+  end
+end
+
+def git_update
+  old_head = `git rev-parse HEAD`
+  #unless system('git fetch && git reset origin/master && git clean -ffd && git reset --hard >/dev/null && git submodule update --init')
+  unless system('git pull --ff-only && git clean -ffd && git submodule update --init')
+    raise "Failed to update Git repository; last exit status was #{$?.exitstatus}"
+  end
+  new_head = `git rev-parse HEAD`
+  return old_head != new_head
+end
+
+task :update do
+  if git_update
+    vagrant_up(boxes)
+    vagrant_provision(boxes)
+  end
+end
