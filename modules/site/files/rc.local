@@ -11,17 +11,9 @@
 #
 # By default this script does nothing.
 
-VAGRANT=`gem environment gemdir`/bin/vagrant
-VAGRANT_BOXES_DIR=/home/vagrant/infrastructure/boxes
-VAGRANT_AUTOBOOT='puppet'
 VAGRANT_USER=vagrant
+VAGRANT_INFRASTRUCTURE=/home/vagrant/infrastructure
 
-if [ -x $VAGRANT ]; then
-	for box in $VAGRANT_AUTOBOOT; do
-		if ! su -l -c "cd $VAGRANT_BOXES_DIR/$box && $VAGRANT up > up.log 2>&1" $VAGRANT_USER; then
-			echo "ERROR: Failed to start Vagrant box '$box'"
-		fi
-	done
-fi
+su -l -c "cd /home/vagrant/infrastructure && rake vagrant:up" $VAGRANT_USER 2>&1 | logger -t vagrant:up
 
 exit 0
