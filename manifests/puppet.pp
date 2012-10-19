@@ -62,44 +62,8 @@ service { 'apache2':
   require => Package['apache2']
 }
 
-include site::vim-puppet
-# include site::vim-pathogen
-# http://tammersaleh.com/posts/the-modern-vim-config-with-pathogen
-# http://jedi.be/blog/2011/12/05/puppet-editing-like-a-pro/
-
-package { 'ruby-dev':
-  ensure => installed
-}
-
-package { 'cucumber-puppet':
-  ensure   => installed,
-  provider => gem,
-  require  => [
-    Package['rubygems'],
-    Package['ruby-dev'],
-  ]
-}
-
-package { 'rspec-puppet':
-  ensure   => installed,
-  provider => gem,
-  require  => [
-    Package['rubygems'],
-    Package['ruby-dev'],
-  ]
-}
-
-package { 'puppet-lint':
-  ensure   => installed,
-  provider => gem,
-  require  => [
-    Package['rubygems'],
-    Package['ruby-dev'],
-  ]
-}
-
 package { 'git':
   ensure => installed
 }
 
-include site::rubygems
+include site::puppet::development

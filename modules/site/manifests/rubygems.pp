@@ -13,4 +13,9 @@ class site::rubygems
     source  => 'puppet:///modules/site/gem.sh',
     require => Package['rubygems']
   }
+
+  # Some gems need this in order to compile native extensions.
+  package { 'ruby-dev':
+    ensure => installed
+  }
 }
