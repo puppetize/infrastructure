@@ -18,3 +18,11 @@ You could also test the same Puppet manifest in a Vagrant box (but of course,
 nested virtual machines may not work that well):
 
 ``# cd boxes/host; vagrant up``
+
+Supported operating systems
+===========================
+
+This infrastructure is known to work with the following operating systems:
+
+* Debian 6.0.6 (squeeze)
+  * facter 1.5.7
