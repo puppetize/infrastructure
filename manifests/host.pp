@@ -63,9 +63,10 @@ exec { 'git-clone-vagrant-infrastructure':
 }
 
 cron { 'git-pull-vagrant-infrastructure':
-  command => "cd ${vagrant_home}/infrastructure && git fetch && git reset origin/master && git clean -ffd && git reset --hard >/dev/null && git submodule update --init",
+  command => "cd ${vagrant_home}/infrastructure && rake update >/dev/null",
   minute  => '*/30',
-  user    => 'vagrant'
+  user    => 'vagrant',
+  require => Package['rake']
 }
 
 $iptables_conf = '/etc/iptables.conf'
