@@ -23,6 +23,51 @@ class { 'site::virtualbox::debian':
 include site::virtualbox
 include site::vagrant
 
+group { 'vagrant':
+  ensure => present
+}
+
+$vagrant_home = '/home/vagrant'
+
+user { 'vagrant':
+  ensure => present,
+  gid    => 'vagrant',
+  home   => $vagrant_home
+}
+
+file { $vagrant_home:
+  ensure   => directory,
+  mode     => '0750',
+  owner    => 'vagrant',
+  group    => 'vagrant',
+  require => User['vagrant']
+}
+
+$vagrant_infrastructure_url = 'https://github.com/puppetize/infrastructure'
+
+$git = '/usr/bin/git'
+
+package { 'git':
+  ensure => present
+}
+
+exec { 'git-clone-vagrant-infrastructure':
+  command => "${git} clone --recursive ${vagrant_infrastructure_url} ${vagrant_home}/infrastructure",
+  creates => "${vagrant_home}/infrastructure",
+  user    => 'vagrant',
+  group   => 'vagrant',
+  require => [
+    File[$vagrant_home],
+    Package['git']
+  ]
+}
+
+cron { 'git-pull-vagrant-infrastructure':
+  command => "cd ${vagrant_home}/infrastructure && git fetch && git reset origin/master && git clean -ffd && git reset --hard >/dev/null && git submodule update --init",
+  minute  => '*/30',
+  user    => 'vagrant'
+}
+
 $iptables_conf = '/etc/iptables.conf'
 
 # Use "iptables-save > /etc/iptables.conf" to update the configuration.
