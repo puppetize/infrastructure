@@ -2,6 +2,9 @@ $_hostname = 'puppet'
 $_domain = 'puppetize.net'
 $_fqdn = "${_hostname}.${_domain}"
 
+# facter 1.6.1 compatibility
+$osfamily = 'Debian'
+
 file { '/etc/hostname':
   ensure  => present,
   mode    => '0444',
