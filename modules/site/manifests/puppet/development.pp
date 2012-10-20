@@ -2,7 +2,7 @@
 class site::puppet::development
 {
   require site::rubygems
-  require site::vim-puppet
+  require site::vim::puppet
 
   $gem_packages = [
     'librarian-puppet',

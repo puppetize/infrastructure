@@ -1,0 +1,10 @@
+syntax on
+
+set nocompatible
+filetype indent plugin on
+set expandtab
+set smarttab
+set autoindent
+
+call pathogen#infect()
+call pathogen#helptags()

@@ -37,6 +37,18 @@ package { 'puppetmaster':
   ]
 }
 
+# XXX: avoids an error when running "puppet apply" from "vagrant provision"
+#
+#  err: Removing mount files: /etc/puppet/files does not exist or is not a
+#  directory
+#
+# This error occurred on Debian 6.0.6 after installing the 'puppetmaster'
+# package.
+file { '/etc/puppet/files':
+  ensure  => directory,
+  require => Package['puppetmaster']
+}
+
 service { 'puppetmaster':
   ensure    => running,
   hasstatus => true,
@@ -60,10 +72,6 @@ file { '/var/www/index.html':
 service { 'apache2':
   ensure  => running,
   require => Package['apache2']
-}
-
-package { 'git':
-  ensure => installed
 }
 
 include site::puppet::development
