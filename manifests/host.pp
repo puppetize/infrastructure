@@ -45,11 +45,9 @@ file { $vagrant_home:
 
 $vagrant_infrastructure_url = 'https://github.com/puppetize/infrastructure'
 
-$git = '/usr/bin/git'
+include site::git
 
-package { 'git':
-  ensure => present
-}
+$git = $site::git::executable
 
 exec { 'git-clone-vagrant-infrastructure':
   command => "${git} clone --recursive ${vagrant_infrastructure_url} ${vagrant_home}/infrastructure",
@@ -58,8 +56,12 @@ exec { 'git-clone-vagrant-infrastructure':
   group   => 'vagrant',
   require => [
     File[$vagrant_home],
-    Package['git']
+    Class['site::git']
   ]
+}
+
+package { 'rake':
+  ensure => installed
 }
 
 cron { 'git-pull-vagrant-infrastructure':
@@ -113,25 +115,17 @@ site::admin_user { 'uwe':
   rsakey   => 'AAAAB3NzaC1yc2EAAAADAQABAAABAQCz0aG1szSSeNCBkz7AiZRgU4Dl63i+C7oBnq3s84mWvhkqJHYH6GsAH2FxCMSr1ETPLIot7YuOWmal+u2Fd25CfQh9AqIjxQAKQBWCJfQTsfnVQHGFJsbHFfn7fjZtDFKEAyjszP5bw/DP8mJhaJ252dvm0xiHB5UrxJ02WK+zrRiqSPrVphu4FPyyyHGFWbEkSD4p4mmmmMjjOTtqON5zu2jXrXD3UqTxZhJh+JcLD8ImYzpogzEaQy6GqM0MnMRtBS0g+eRXRIrW4T1g26ILhWkzCIfdIDnXPnBWQ79Y3Nu8STNxY8xPBPL05o3CFAaeg7+QLB6lNQcR2E2HFOYd'
 }
 
-include site::vim-puppet
+#include site::puppet::development
 
 ## development: stuff I installed to preview README.md
 
-package { 'rake':
-  ensure => installed
-}
-
-package { 'ruby-dev':
-  ensure => installed
-}
-
 # Version 2.2.1 of this gem did not compile with Ruby 1.8:
 # https://github.com/vmg/redcarpet/commit/4f41aea8d523301a1d20b05f7a21b25f5bb13ea9#comments
-package { 'redcarpet':
-  provider => gem,
-  ensure   => '2.2.0',
-  require  => [
-    Package['rubygems'],
-    Package['ruby-dev']
-  ]
-}
+#package { 'redcarpet':
+#  provider => gem,
+#  ensure   => '2.2.0',
+#  require  => [
+#    Package['rubygems'],
+#    Package['ruby-dev']
+#  ]
+#}
