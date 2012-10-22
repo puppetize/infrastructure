@@ -1,26 +1,41 @@
 How to create the Vagrant base box "squeeze32" from scratch
 ===========================================================
 
-1. Install Debian 6.0.6 (squeeze) from the first CD image.
-2. Create a new group "admin" and add the vagrant user to it.
+1. Create a new virtual machine in VirtualBox, called "squeeze32".
+2. Install Debian 6.0.6 (squeeze) from the first CD image.
+3. Create a new group "admin" and add the vagrant user to it.
+   ```
    # groupadd admin
    # useradd -G admin -a vagrant
-3. Insert the CD image again.
-4. Install the "sudo" package and configure it.
+   ```
+4. Insert the CD image again.
+5. Install the "sudo" package and configure it.
+   ```
    # apt-get install sudo
    # echo 'Defaults env_keep += "SSH_AUTH_SOCK"' > /etc/sudoers.d/vagrant
    # echo '%admin ALL=(ALL) NOPASSWD: ALL' >> /etc/sudoers.d/vagrant
-5. Install the "openssh-server" package and add the insecure public key.
+   ```
+6. Install the "openssh-server" package and add the insecure public key.
+   ```
    # apt-get install openssh-server
    # sudo -u vagrant mkdir /home/vagrant/.ssh
    # sudo -u vagrant wget --no-check-certificate \
      -O/home/vagrant/.ssh/authorized_keys \
      https://raw.github.com/mitchellh/master/keys/vagrant.pub
-6. Install Puppet.
+   ```
+7. Install Puppet.
+   ```
    # apt-get install puppet
-7. Disable the CD-ROM package source (otherwise, Puppet refuses to
-   install packages).
+   ```
+8. Disable the CD-ROM package source in `/etc/apt/sources.list`. Otherwise
+   Puppet will refuse to install packages.
 
-Now package the base box with Vagrant:
-
-# vagrant package --base squeeze32
+9. Shut down the virtual machine and package it as a base box image. This
+   will create a file called `package.box`.
+   ```
+   $ vagrant package --base squeeze32
+   ```
+10. Install the base box.
+    ```
+    $ vagrant box add package.box
+    ```
