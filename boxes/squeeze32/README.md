@@ -2,11 +2,13 @@ How to create the Vagrant base box "squeeze32" from scratch
 ===========================================================
 
 1. Create a new virtual machine in VirtualBox, called "squeeze32".
-2. Install Debian 6.0.6 (squeeze) from the first CD image.
-3. Create a new group "admin" and add the vagrant user to it.
+2. Install Debian 6.0.6 (squeeze) from the first CD image.  Set the
+   root password to "vagrant" and create a new user with username
+   and password "vagrant".
+3. Create a new group "admin" and add the "vagrant" user to it.
    ```
    # groupadd admin
-   # useradd -G admin -a vagrant
+   # usermod -G admin -a vagrant
    ```
 4. Insert the CD image again.
 5. Install the "sudo" package and configure it.
@@ -21,7 +23,7 @@ How to create the Vagrant base box "squeeze32" from scratch
    # sudo -u vagrant mkdir /home/vagrant/.ssh
    # sudo -u vagrant wget --no-check-certificate \
      -O/home/vagrant/.ssh/authorized_keys \
-     https://raw.github.com/mitchellh/master/keys/vagrant.pub
+     https://raw.github.com/mitchellh/vagrant/master/keys/vagrant.pub
    ```
 7. Install Puppet.
    ```
@@ -37,5 +39,5 @@ How to create the Vagrant base box "squeeze32" from scratch
    ```
 10. Install the base box.
     ```
-    $ vagrant box add package.box
+    $ vagrant box add squeeze32 package.box
     ```
