@@ -3,7 +3,11 @@ $_domain = 'puppetize.net'
 $_fqdn = "${_hostname}.${_domain}"
 
 # facter 1.6.1 compatibility
-$osfamily = 'Debian'
+if $operatingsystem == Debian {
+  if !$osfamily {
+    $osfamily = 'Debian'
+  }
+}
 
 file { '/etc/hostname':
   ensure  => present,
