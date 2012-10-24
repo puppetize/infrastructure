@@ -1,0 +1,91 @@
+require 'rubygems'
+require 'veewee'
+
+desc "Build all base boxes and .box files"
+task :build
+
+desc "Destroy all base boxes and their .box files"
+task :destroy
+
+desc "Add all base boxes to vagrant"
+task :install
+
+desc "Remove all base boxes from vagrant"
+task :uninstall
+
+$venv = Veewee::Environment.new
+$virtualbox = $venv.providers['virtualbox']
+
+def box_file box
+  box + '.box'
+end
+
+$venv.definitions.each do |box, definitions|
+  namespace :build do
+    desc "Build the #{box} box and #{box_file box}"
+    task box do |t|
+      box_build box
+    end
+  end
+
+  namespace :destroy do
+    desc "Remove #{box_file box} and destroy its basebox"
+    task box do |t|
+      if File.exists? box_file(box)
+        execute %W{rm -f #{box_file box}}
+      end
+      if $virtualbox.get_box(box).exists?
+        execute %W{vagrant basebox destroy #{box}}
+      end
+    end
+  end
+
+  namespace :install do
+    desc "Add the #{box} box to vagrant"
+    task box do |t|
+      unless box_exists? box
+        box_build box unless File.exists? box_file(box)
+        execute %W{vagrant box add #{box} #{box_file(box)}}
+      end
+    end
+  end
+
+  namespace :uninstall do
+    desc "Remove the #{box} box from vagrant"
+    task box do |t|
+      if box_exists? box
+        execute %W{vagrant box remove #{box}}
+      end
+    end
+  end
+
+  task :build => "build:#{box}"
+  task :destroy => "destroy:#{box}"
+  task :install => "install:#{box}"
+  task :uninstall => "uninstall:#{box}"
+end
+
+def box_build box
+  unless File.exists? box_file(box)
+    unless $virtualbox.get_box(box).exists?
+      execute %W{vagrant basebox build --auto --nogui #{box}}
+      # XXX: avoid VBOX_E_INVALID_OBJECT_STATE error
+      # Starting process: ["VBoxManage", "modifyvm", "squeeze32", "--natpf1", "delete", "guestssh"]
+      # stderr: VBoxManage: error: The machine 'squeeze32' is already locked for a session (or being unlocked)
+      sleep 3
+    end
+    execute %W{vagrant basebox export #{box}}
+  end
+end
+
+def box_exists? box
+  `vagrant box list`.split("\n").include?(box)
+end
+
+def execute command
+  puts "Executing: #{command.join(' ')}"
+  unless system(*command)
+    raise "Command failed: #{command.join(' ')} " + \
+      "(exit status was #{$?.exitstatus})"
+  end
+end

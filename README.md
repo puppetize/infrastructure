@@ -4,6 +4,29 @@ What is this?
 This repository contains the Puppet code and Vagrant box definitions for the
 infrastructure on http://puppetize.net.
 
+Vagrant host requirements
+=========================
+
+* VirtualBox 4.0
+* Ruby 1.8
+  * rake
+  * vagrant
+  * veewee
+
+Building base boxes for Vagrant
+===============================
+
+Execute the following command to build the .box files for all defined base
+boxes and then add them to your vagrant installation, unless they exist
+already:
+
+``# (cd boxes/base && rake install)``
+
+You can also install the base boxes and destroy them afterwards, in one go,
+leaving only the base boxes in vagrant:
+
+``# (cd boxes/base && rake install destroy)``
+
 How do I set up the main Vagrant host?
 ======================================
 
@@ -17,7 +40,7 @@ the working copy:
 You could also test the same Puppet manifest in a Vagrant box (but of course,
 nested virtual machines may not work that well):
 
-``# cd boxes/host; vagrant up``
+``# (cd boxes/host && vagrant up)``
 
 Supported operating systems
 ===========================
