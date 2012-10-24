@@ -22,54 +22,8 @@ class { 'site::virtualbox::debian':
 
 include site::virtualbox
 include site::vagrant
-
-group { 'vagrant':
-  ensure => present
-}
-
-$vagrant_home = '/home/vagrant'
-
-user { 'vagrant':
-  ensure => present,
-  gid    => 'vagrant',
-  home   => $vagrant_home
-}
-
-file { $vagrant_home:
-  ensure   => directory,
-  mode     => '0750',
-  owner    => 'vagrant',
-  group    => 'vagrant',
-  require => User['vagrant']
-}
-
-$vagrant_infrastructure_url = 'https://github.com/puppetize/infrastructure'
-
-include site::git
-
-$git = $site::git::executable
-
-exec { 'git-clone-vagrant-infrastructure':
-  command => "${git} clone --recursive ${vagrant_infrastructure_url} ${vagrant_home}/infrastructure",
-  creates => "${vagrant_home}/infrastructure",
-  user    => 'vagrant',
-  group   => 'vagrant',
-  require => [
-    File[$vagrant_home],
-    Class['site::git']
-  ]
-}
-
-package { 'rake':
-  ensure => installed
-}
-
-cron { 'git-pull-vagrant-infrastructure':
-  command => "cd ${vagrant_home}/infrastructure && rake update >/dev/null",
-  minute  => '*/30',
-  user    => 'vagrant',
-  require => Package['rake']
-}
+include site::vagrant::veewee
+include site::vagrant::infrastructure
 
 $iptables_conf = '/etc/iptables.conf'
 
@@ -94,14 +48,6 @@ file { '/etc/network/if-up.d/iptables':
   owner   => 'root',
   group   => 'root',
   content => "#!/bin/sh\niptables-restore < ${iptables_conf}\n"
-}
-
-file { '/etc/rc.local':
-  ensure => present,
-  source => 'puppet:///modules/site/rc.local',
-  mode   => '0555',
-  owner  => 'root',
-  group  => 'root'
 }
 
 package { 'sudo':
