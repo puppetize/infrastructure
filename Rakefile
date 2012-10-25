@@ -15,12 +15,12 @@ end
 boxes = ['puppet']
 
 namespace :vagrant do
-  desc "Start Vagrant boxes"
+  desc "Start Vagrant boxes #{boxes.inspect}"
   task :up do
     vagrant_up(boxes)
   end
 
-  desc "Stop Vagrant boxes"
+  desc "Stop Vagrant boxes #{boxes.inspect}"
   task :halt do
     vagrant_halt(boxes)
   end
