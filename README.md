@@ -44,7 +44,7 @@ including [Puppet](http://puppetlabs.com/puppet/what-is-puppet/).  Then clone
 this repository and run the following command in the top-level directory of
 the working copy:
 
-``$ sudo puppet apply --confdir=`pwd` manifests/host.pp``
+``$ rake puppetize:host``
 
 You could also test the same Puppet manifest in a Vagrant box (but of course,
 nested virtual machines may not work that well):

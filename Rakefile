@@ -75,3 +75,29 @@ task :update do
     vagrant_provision(boxes)
   end
 end
+
+def puppet_apply manifest
+  command = %W{puppet apply --modulepath=#{Dir.pwd}/modules -e #{manifest}}
+  command.unshift 'sudo' unless Process.uid == 0
+  unless system *command
+    manifest = manifest.split("\n").join("\n  ")
+    raise "Could not apply the Puppet manifest:\n  #{manifest}\n" + \
+      "Command #{command.inspect} returned exit status #{$?.exitstatus}."
+  end
+end
+
+def puppet_apply_class puppet_class
+  puppet_apply "include #{puppet_class}"
+end
+
+namespace :puppetize do
+  desc "Turn this node into a Vagrant host"
+  task :host do |t|
+    puppet_apply File.read('manifests/host.pp')
+  end
+
+  desc "Set up Puppet editor support in Vim (system-wide)"
+  task :vim do |t|
+    puppet_apply_class 'site::vim::puppet'
+  end
+end
