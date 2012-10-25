@@ -43,10 +43,7 @@ Vagrant::Config.run do |config|
   # an identifier, the second is the path on the guest to mount the
   # folder, and the third is the path on the host to the actual folder.
   # config.vm.share_folder "v-data", "/vagrant_data", "../data"
-
-  # The base image may be out-of-date and unable to find the packages
-  # it has listed in its local APT cache.
-  #config.vm.provision :shell, :inline => "apt-get update"
+  config.vm.share_folder "v-infra", "/home/vagrant/infrastructure", "../.."
 
   # Enable provisioning with Puppet stand alone.  Puppet manifests
   # are contained in a directory path relative to this Vagrantfile.
