@@ -16,6 +16,13 @@ Vagrant::Config.run do |config|
   # Boot with a GUI so you can see the screen. (Default is headless)
   # config.vm.boot_mode = :gui
 
+  # Enable the "Hardware clock in UTC time" setting because the base
+  # image is configured to expect the hardware clock to be in UTC time,
+  # and because that's the traditional Unix way as well.
+  #
+  # See https://github.com/mitchellh/vagrant/issues/912.
+  config.vm.customize ["modifyvm", :id, "--rtcuseutc", "on"]
+
   # Assign this VM to a host-only network IP, allowing you to access it
   # via the IP. Host-only networks can talk to the host machine as well as
   # any other machines on the same network, but cannot be accessed (through this
