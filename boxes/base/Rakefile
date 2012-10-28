@@ -20,7 +20,10 @@ def box_file box
   box + '.box'
 end
 
+host_is_64bit = ['a'].pack('P').length > 4
+
 $venv.definitions.each do |box, definitions|
+
   namespace :build do
     desc "Build the #{box} box and #{box_file box}"
     task box do |t|
@@ -57,6 +60,12 @@ $venv.definitions.each do |box, definitions|
         execute %W{vagrant box remove #{box}}
       end
     end
+  end
+
+  if definitions['os_type_id'].to_s.end_with? '_64'
+    next unless host_is_64bit
+  else
+    next if host_is_64bit
   end
 
   task :build => "build:#{box}"
