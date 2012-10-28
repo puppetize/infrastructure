@@ -62,7 +62,7 @@ $venv.definitions.each do |box, definitions|
     end
   end
 
-  if definitions['os_type_id'].to_s.end_with? '_64'
+  if definitions.os_type_id.end_with? '_64'
     next unless host_is_64bit
   else
     next if host_is_64bit
