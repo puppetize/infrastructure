@@ -63,7 +63,7 @@
 	url = git://github.com/puppetlabs/puppetlabs-vcsrepo
 [submodule "modules/vswitch"]
 	path = modules/vswitch
-	url = git://github.com:puppetize/puppet-vswitch
+	url = git://github.com/puppetize/puppet-vswitch
 [submodule "modules/xinetd"]
 	path = modules/xinetd
 	url = git://github.com/puppetlabs/puppetlabs-xinetd
