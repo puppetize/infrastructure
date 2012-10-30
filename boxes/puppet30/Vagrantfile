@@ -1,13 +1,15 @@
 # -*- mode: ruby -*-
 # vi: set ft=ruby :
 
+host_is_64bit = ['a'].pack('P').length > 4
+
 Vagrant::Config.run do |config|
   # All Vagrant configuration is done here. The most common configuration
   # options are documented and commented below. For a complete reference,
   # please see the online documentation at vagrantup.com.
 
   # Every Vagrant virtual environment requires a box to build off of.
-  config.vm.box = "squeeze32"
+  config.vm.box = host_is_64bit ? "squeeze64" : "squeeze32"
 
   # The url from where the 'config.vm.box' box will be fetched if it
   # doesn't already exist on the user's system.
