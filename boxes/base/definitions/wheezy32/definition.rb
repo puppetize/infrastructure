@@ -20,7 +20,7 @@ Veewee::Definition.declare({
      'netcfg/get_hostname=%NAME% ',
      'netcfg/get_domain=vagrantup.com ',
      'fb=false ',
-     'debconf/frontend=noninteractive ',
+     'DEBIAN_FRONTEND=noninteractive ',
      'console-setup/ask_detect=false ',
      'console-keymaps-at/keymap=us ',
      '<Enter>'
