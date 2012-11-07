@@ -62,6 +62,22 @@ $venv.definitions.each do |box, definitions|
     end
   end
 
+  namespace :build do
+    task :all => "build:#{box}"
+  end
+
+  namespace :destroy do
+    task :all => "destroy:#{box}"
+  end
+
+  namespace :install do
+    task :all => "install:#{box}"
+  end
+
+  namespace :uninstall do
+    task :all => "uninstall:#{box}"
+  end
+
   if definitions.os_type_id.end_with? '_64'
     next unless host_is_64bit
   else
