@@ -1,17 +1,40 @@
 require 'rubygems'
 require 'veewee'
 
-desc "Build all base boxes and .box files"
+host_is_64bit = ['a'].pack('P').length > 4
+host_bits = host_is_64bit ? '64-bit' : '32-bit'
+
+desc "Build #{host_bits} base boxes and .box files"
 task :build
 
-desc "Destroy all base boxes and their .box files"
+desc "Destroy #{host_bits} base boxes and their .box files"
 task :destroy
 
-desc "Add all base boxes to vagrant"
+desc "Add #{host_bits} base boxes to vagrant"
 task :install
 
-desc "Remove all base boxes from vagrant"
+desc "Remove #{host_bits} base boxes from vagrant"
 task :uninstall
+
+namespace :build do
+  desc "Build all boxes (32-bit and 64-bit)"
+  task :all
+end
+
+namespace :destroy do
+  desc "Destroy all boxes (32-bit and 64-bit)"
+  task :all
+end
+
+namespace :install do
+  desc "Install all boxes (32-bit and 64-bit)"
+  task :all
+end
+
+namespace :uninstall do
+  desc "Uninstall all boxes (32-bit and 64-bit)"
+  task :all
+end
 
 $venv = Veewee::Environment.new
 $virtualbox = $venv.providers['virtualbox']
@@ -19,8 +42,6 @@ $virtualbox = $venv.providers['virtualbox']
 def box_file box
   box + '.box'
 end
-
-host_is_64bit = ['a'].pack('P').length > 4
 
 $venv.definitions.each do |box, definitions|
 
