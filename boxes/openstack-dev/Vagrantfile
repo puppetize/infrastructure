@@ -25,6 +25,11 @@ Vagrant::Config.run do |config|
   # See https://github.com/mitchellh/vagrant/issues/912.
   config.vm.customize ["modifyvm", :id, "--rtcuseutc", "on"]
 
+  # Create a second NIC "eth1" (private_interface for OpenStack).
+  config.vm.customize ["modifyvm", :id, "--nic2", "intnet"]
+  config.vm.customize ["modifyvm", :id, "--intnet2", 'openstack-private']
+  config.vm.customize ["modifyvm", :id, "--nicpromisc2", "allow-all"]
+
   # Assign this VM to a host-only network IP, allowing you to access it
   # via the IP. Host-only networks can talk to the host machine as well as
   # any other machines on the same network, but cannot be accessed (through this
@@ -38,16 +43,16 @@ Vagrant::Config.run do |config|
 
   # Forward a port from the guest to the host, which allows for outside
   # computers to access the VM, whereas host only networking does not.
-  #config.vm.forward_port 80, 8080
-  #config.vm.forward_port 8140, 8140
+  config.vm.forward_port 80, 8081
 
   # Share an additional folder to the guest VM. The first argument is
   # an identifier, the second is the path on the guest to mount the
   # folder, and the third is the path on the host to the actual folder.
   # config.vm.share_folder "v-data", "/vagrant_data", "../data"
   config.vm.share_folder "v-infra", "/home/vagrant/infrastructure", "../.."
-  config.vm.share_folder "v-modules", "/home/vagrant/infrastructure", "../../modules"
-  config.vm.share_folder "v-manifests", "/home/vagrant/infrastructure", "../../manifests"
+
+  # Apply some patches to Puppet.
+  config.vm.provision :shell, :path => 'puppet-patch.sh'
 
   # Enable provisioning with Puppet stand alone.  Puppet manifests
   # are contained in a directory path relative to this Vagrantfile.
