@@ -61,6 +61,12 @@ site::admin_user { 'uwe':
   rsakey   => 'AAAAB3NzaC1yc2EAAAADAQABAAABAQCz0aG1szSSeNCBkz7AiZRgU4Dl63i+C7oBnq3s84mWvhkqJHYH6GsAH2FxCMSr1ETPLIot7YuOWmal+u2Fd25CfQh9AqIjxQAKQBWCJfQTsfnVQHGFJsbHFfn7fjZtDFKEAyjszP5bw/DP8mJhaJ252dvm0xiHB5UrxJ02WK+zrRiqSPrVphu4FPyyyHGFWbEkSD4p4mmmmMjjOTtqON5zu2jXrXD3UqTxZhJh+JcLD8ImYzpogzEaQy6GqM0MnMRtBS0g+eRXRIrW4T1g26ILhWkzCIfdIDnXPnBWQ79Y3Nu8STNxY8xPBPL05o3CFAaeg7+QLB6lNQcR2E2HFOYd'
 }
 
+ssh_authorized_key { 'uwe@Nexus 7':
+  user => 'uwe',
+  type => 'ssh-rsa',
+  key  => 'AAAAB3NzaC1yc2EAAAADAQABAAABAQCWE0TEhd/MNZ4hOLN6/RXVMqQIgXN8ZIZkSJSnkxyjkR9chQ2T/jBJf0f1PvNPhXvt0SjwEM68pw66XEGvblVgED2BhGboO4n4VpI35L39Ysv+5jQq1Ga4k17MnjFtLJ6L+/o6UYTPL7K7fHGJn2Rjvp/00atdt7Q1MCx9AjCs/64WIrYN9KqaRDksAeHbnb7wpQ1euThzI5XwmYXu+Rz7hmLogUj8AKZdfWk4hO6Sm83/TrALIn2+xJDBUgFBhsx5w2t23tBOEsTwLKlsVR6sEMunYN+kB2D5LmplHhGFl+mSShrYF1yUFzAHVG7wBhMGAv5Hl/7pEzZDt771CKvh'
+}
+
 #include site::puppet::development
 
 ## development: stuff I installed to preview README.md
