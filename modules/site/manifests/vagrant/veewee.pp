@@ -1,7 +1,7 @@
 # Install 'veewee' extension for building base boxes from scratch.
 class site::vagrant::veewee
 {
-  case $::operatingsystem {
+  case $::osfamily {
     Debian: {
       $packages = [
         'libxml2-dev',

@@ -31,11 +31,12 @@ class site::vagrant::infrastructure(
   $git = $site::git::executable
 
   exec { 'git-clone-vagrant-infrastructure':
-    command => "${git} clone --recursive '${vagrant_infrastructure_url}' ${vagrant_infrastructure_home}",
-    creates => "${vagrant_infrastructure_home}/.git",
-    user    => $vagrant_user,
-    group   => $vagrant_group,
-    require => [
+    command   => "${git} clone --recursive '${vagrant_infrastructure_url}' ${vagrant_infrastructure_home}",
+    creates   => "${vagrant_infrastructure_home}/.git",
+    user      => $vagrant_user,
+    group     => $vagrant_group,
+    logoutput => on_failure,
+    require   => [
       File[$vagrant_home],
       Class['site::git']
     ]
