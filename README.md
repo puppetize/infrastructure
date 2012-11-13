@@ -15,7 +15,7 @@ itself automatically.
 Vagrant host requirements
 =========================
 
-* VirtualBox 4.0
+* VirtualBox 4.2
 * Ruby 1.8
   * Rake
   * Vagrant
