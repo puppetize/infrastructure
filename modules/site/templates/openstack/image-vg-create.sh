@@ -34,3 +34,7 @@ then
     fi
   fi
 fi
+
+if service cinder-volume status | grep -q stop; then
+  service cinder-volume start
+fi

@@ -13,13 +13,8 @@ class site::openstack::volume_group(
     mode    => '0555',
   } ->
   exec { '/bin/sh /etc/rc.lvm':
-    unless => "/sbin/vgs ${vgname} >/dev/null 2>&1",
-  } ->
-  file { '/etc/rc.local':
-    ensure  => present,
-    content => "[ -r /etc/rc.lvm ] && sh /etc/rc.lvm\n",
-    owner   => 'root',
-    group   => 'root',
-    mode    => '0555'
+    unless => "/sbin/vgs ${vgname} >/dev/null 2>&1"
   }
+
+  include site::rc_local
 }

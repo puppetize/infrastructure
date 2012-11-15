@@ -48,9 +48,17 @@ fi
 
 if ! nova show $instance_name >/dev/null 2>&1; then
   nova boot --flavor m1.tiny --image $cirros_image --poll $instance_name
+elif ! pgrep qemu-system >/dev/null; then
+  echo -n "Restarting $instance_name..."
+  nova stop $instance_name
+  while ! nova show $instance_name | grep -q SHUTOFF; do sleep 1; done
+  nova start $instance_name
+  echo done
 fi
 
 export HOME=/root
 if mysql -e 'show create database `nova`' | grep -q utf8; then
   mysql -e 'alter database `nova` CHARACTER SET latin1'
 fi
+
+touch /run/`basename $0`

@@ -19,11 +19,13 @@ class site::openstack::rc
   }
 
   exec { '/etc/rc.postinstall':
-    command   => '/etc/rc.postinstall && touch /run/rc.postinstall',
+    command   => '/etc/rc.postinstall',
     creates   => '/run/rc.postinstall',
     logoutput => true,
-    require   => File['/etc/rc.postinstall'],
+    require   => File['/etc/rc.postinstall']
   }
+
+  include site::rc_local
 }
 
 stage { last: require => Stage['main'] }
