@@ -69,6 +69,33 @@ define site::admin_user($ensure = present, $shell = '/bin/bash',
           content => template('site/admin_user/.gitconfig')
         }
       }
+
+      # FIXME
+      $keystone_email = $email
+      $keystone_password = $name
+
+      @keystone_user { $name:
+        ensure   => present,
+        enabled  => 'True',
+        tenant   => $name,
+        email    => $keystone_email,
+        password => $keystone_password,
+      }
+
+      @keystone_tenant { $name:
+        ensure      => present,
+        enabled     => 'True',
+        description => "${name}'s project",
+      }
+
+      @keystone_user_role { "${name}@${name}":
+        roles   => 'Member',
+        ensure  => present,
+        require => [
+          Keystone_user[$name],
+          Keystone_tenant[$name]
+        ]
+      }
     }
 
     default: {
