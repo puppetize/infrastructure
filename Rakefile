@@ -69,6 +69,7 @@ def git_update
   return old_head != new_head
 end
 
+desc "Run \"git pull\" and update virtual machines"
 task :update do
   if git_update
     vagrant_up(boxes)
