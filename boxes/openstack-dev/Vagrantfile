@@ -25,11 +25,6 @@ Vagrant::Config.run do |config|
   # See https://github.com/mitchellh/vagrant/issues/912.
   config.vm.customize ["modifyvm", :id, "--rtcuseutc", "on"]
 
-  # Create a second NIC "eth1" (private_interface for OpenStack).
-  config.vm.customize ["modifyvm", :id, "--nic2", "intnet"]
-  config.vm.customize ["modifyvm", :id, "--intnet2", 'openstack-private']
-  config.vm.customize ["modifyvm", :id, "--nicpromisc2", "allow-all"]
-
   # Assign this VM to a host-only network IP, allowing you to access it
   # via the IP. Host-only networks can talk to the host machine as well as
   # any other machines on the same network, but cannot be accessed (through this

@@ -1,18 +1,18 @@
 # Simgle-node OpenStack installation.
 class site::openstack::all(
-  $admin_password,
+  $public_interface,
+  $public_address,
   $cinder_volumes_size,
+  $admin_password,
   $admin_email = 'root@localhost'
 ) {
   class { 'site::openstack::volume_group':
     image_size => $cinder_volumes_size
   } ->
   class { '::openstack::all':
-    public_interface  => 'eth0',
-    public_address    => $ipaddress_eth0,
-    fixed_range       => '10.0.2.128/25',
-
-    private_interface => 'eth1',
+    public_interface     => $public_interface,
+    public_address       => $public_address,
+    fixed_range          => '10.0.2.128/25',
 
     admin_email          => $admin_email,
     admin_password       => $admin_password,
