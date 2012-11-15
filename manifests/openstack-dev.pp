@@ -32,18 +32,24 @@ class { 'site::openstack::rc':
   stage => last
 }
 
-file { '/etc/libvirt/qemu.conf':
-  ensure  => present,
-  source  => 'puppet:///modules/site/qemu.conf',
-  owner   => 'root',
-  group   => 'root',
-  mode    => '0444',
-  require => Package['libvirt-bin'],
-  notify  => Service['libvirt-bin']
+# https://bugs.launchpad.net/ubuntu/+source/libvirt/+bug/1075610
+class libvirt_qemu_conf_cgroup_device_acl
+{
+  $qemu_conf = '/etc/libvirt/qemu.conf'
+
+  file { "${qemu_conf}.puppet":
+    ensure  => present,
+    source  => 'puppet:///modules/site/openstack/qemu.conf',
+    owner   => 'root',
+    group   => 'root',
+    mode    => '0444',
+  }->
+  exec { 'add cgroup_device_acl to qemu.conf':
+    command => "/bin/cat >> ${qemu_conf} < ${qemu_conf}.puppet",
+    unless  => "/bin/grep -q ^cgroup_device_acl ${qemu_conf}",
+    require => Package['libvirt-bin'],
+    notify  => Service['libvirt-bin']
+  }
 }
 
-file { '/etc/libvirt/qemu/networks/default.xml':
-  ensure  => absent,
-  require => Package['libvirt-bin'],
-  before  => Service['libvirt-bin']
-}
+include libvirt_qemu_conf_cgroup_device_acl
