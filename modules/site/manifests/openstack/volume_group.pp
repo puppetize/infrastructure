@@ -5,16 +5,15 @@ class site::openstack::volume_group(
   $image_file = '/lvm.img',
   $image_size = '4G'
 ) {
-  file { '/etc/rc.lvm':
+  file { '/etc/init.d/cinder-volumes-vg':
     ensure  => present,
-    content => template('site/openstack/image-vg-create.sh'),
+    content => template('site/openstack/cinder-volumes-vg.init'),
     owner   => 'root',
     group   => 'root',
     mode    => '0555',
   } ->
-  exec { '/bin/sh /etc/rc.lvm':
-    unless => "/sbin/vgs ${vgname} >/dev/null 2>&1"
+  service { 'cinder-volumes-vg':
+    ensure => running,
+    enable => true
   }
-
-  include site::rc_local
 }

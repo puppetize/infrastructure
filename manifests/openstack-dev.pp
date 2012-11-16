@@ -7,33 +7,6 @@ class { 'site::openstack::all':
   admin_password      => $admin_password
 }
 
-class site::openstack::rc
-{
-  file { '/etc/rc.postinstall':
-    ensure  => present,
-    content => template('site/openstack/postinstall.sh'),
-    owner   => 'root',
-    group   => 'root',
-    mode    => '0555',
-    notify  => Exec['/etc/rc.postinstall']
-  }
-
-  exec { '/etc/rc.postinstall':
-    command   => '/etc/rc.postinstall',
-    creates   => '/run/rc.postinstall',
-    logoutput => true,
-    require   => File['/etc/rc.postinstall']
-  }
-
-  include site::rc_local
-}
-
-stage { last: require => Stage['main'] }
-
-class { 'site::openstack::rc':
-  stage => last
-}
-
 # https://bugs.launchpad.net/ubuntu/+source/libvirt/+bug/1075610
 class libvirt_qemu_conf_cgroup_device_acl
 {

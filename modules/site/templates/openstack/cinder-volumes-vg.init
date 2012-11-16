@@ -1,0 +1,75 @@
+#! /bin/sh
+
+### BEGIN INIT INFO
+# Provides:          cinder-volumes-vg
+# Required-Start:    $local_fs $remote_fs
+# Required-Stop:
+# X-Start-Before:    cinder-volume
+# Default-Start:     2 3 4 5
+# Default-Stop:
+# Short-Description: Configure a loop device for the 'cinder-volumes' group
+# Description: Configure a loop device for the 'cinder-volumes' LVM group.
+### END INIT INFO
+
+set -e
+
+N=/etc/init.d/cinder-volumes-vg
+
+VGNAME=<%= vgname %>
+LOOP_DEVICE=<%= loop_device %>
+IMAGE_FILE=<%= image_file %>
+IMAGE_SIZE='bs=1k seek=<%=
+  if image_size =~ /^(\d+)\s*([GMK])$/
+    count = $1.to_i
+    unit = $2
+    factor = { "K" => 1, "M" => 1024, "G" => 1048576 }[unit]
+    fail "Invalid unit: #{unit}" unless factor
+    count * factor
+  else
+    fail "Invalid image_size format: #{image_size}"
+  end
+%>'
+
+case "$1" in
+  start)
+	set -x
+	if ! vgs $VGNAME >/dev/null 2>&1
+	then
+	  if ! losetup $LOOP_DEVICE >/dev/null 2>&1
+	  then
+	    if [ ! -f $IMAGE_FILE ]
+	    then
+	      dd if=/dev/null of=$IMAGE_FILE $IMAGE_SIZE
+	      losetup $LOOP_DEVICE $IMAGE_FILE
+	      echo ,,8e,, | sfdisk $LOOP_DEVICE
+	      pvcreate $LOOP_DEVICE
+	      vgcreate $VGNAME $LOOP_DEVICE
+	    else
+	      losetup $LOOP_DEVICE $IMAGE_FILE
+	      vgscan
+	    fi
+	  fi
+	fi
+	;;
+  status)
+	if vgs $VGNAME >/dev/null 2>&1
+	then
+	  echo Volume group $VGNAME exists.
+	  exit 0
+	else
+	  echo Volume group $VGNAME does not exist.
+	  exit 1
+	fi
+	;;
+  reload|restart|force-reload)
+	exec "$0" start
+	;;
+  stop)
+	;;
+  *)
+	echo "Usage: $N {start|stop|restart|force-reload|status}" >&2
+	exit 1
+	;;
+esac
+
+exit 0
