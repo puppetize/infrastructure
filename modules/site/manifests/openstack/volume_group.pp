@@ -14,6 +14,7 @@ class site::openstack::volume_group(
   } ->
   service { 'cinder-volumes-vg':
     ensure => running,
-    enable => true
+    enable => true,
+    notify => Service['cinder-volume']
   }
 }

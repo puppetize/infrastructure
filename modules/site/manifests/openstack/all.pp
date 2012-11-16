@@ -31,8 +31,13 @@ class site::openstack::all(
     libvirt_type         => 'qemu'
   } 
 
+  # Patch /etc/libvirt/qemu.conf for use with Quantum OVS.
+  include site::openstack::libvirt
+
+  # Apache is needed for the OpenStack dashboard (Horizon).
   include apache
 
+  # Realize Nova users and projects defined elsewhere.
   Keystone_tenant <| |>
   Keystone_user <| |>
   Keystone_user_role <| |>
