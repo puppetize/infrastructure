@@ -34,6 +34,12 @@ class site::openstack::all(
   # Patch /etc/libvirt/qemu.conf for use with Quantum OVS.
   include site::openstack::libvirt
 
+  # Force the default charset of the 'nova' database to latin1.
+  include site::openstack::nova_db_charset
+
+  # Fix the format of this file to make it pure ini-style.
+  #include site::openstack::glance_api_paste_ini
+
   # Apache is needed for the OpenStack dashboard (Horizon).
   include apache
 
