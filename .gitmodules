@@ -18,7 +18,7 @@
 	url = https://github.com/puppetlabs/puppetlabs-git
 [submodule "modules/glance"]
 	path = modules/glance
-	url = https://github.com/puppetlabs/puppetlabs-glance
+	url = https://github.com/puppetize/puppetlabs-glance
 [submodule "modules/horizon"]
 	path = modules/horizon
 	url = https://github.com/puppetlabs/puppetlabs-horizon
