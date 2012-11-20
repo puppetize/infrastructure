@@ -11,6 +11,8 @@ cirros_image=cirros-0.3.0-x86_64-disk
 #cirros_image_url=https://launchpad.net/cirros/trunk/0.3.0/+download/${cirros_image}.img
 instance_name=inst1
 
+sleep 5
+
 if ! ip link show br-virtual.$vlan >/dev/null 2>&1; then
   ip link add link br-virtual name br-virtual.$vlan type vlan id $vlan
   ip addr add $bridge_addr dev br-virtual.$vlan

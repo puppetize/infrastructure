@@ -19,6 +19,8 @@ class site::openstack::setup(
 
   $dependencies = [
     File['/etc/openrc.sh'],
+    Class['glance::api'],
+    Class['glance::registry'],
     Class['keystone'],
     Class['nova::api'],
     Class['nova::compute'],
@@ -31,8 +33,7 @@ class site::openstack::setup(
   {
     exec { "quantum net-create '${name}'":
       command => "/bin/sh -c '. /etc/openrc.sh; /usr/bin/quantum net-create \"${name}\" --provider:network_type vlan --provider:segmentation_id ${vlan} --shared --router:external True'",
-      unless  => "/bin/sh -c '. /etc/openrc.sh; /usr/bin/quantum net-show \"${name}\"'",
-      require => $dependencies
+      unless  => "/bin/sh -c '. /etc/openrc.sh; /usr/bin/quantum net-show \"${name}\"'"
     }
   }
 
@@ -46,7 +47,8 @@ class site::openstack::setup(
   }
 
   quantum_net { 'public':
-    vlan => $vlan
+    vlan    => $vlan,
+    require => $dependencies
   }
 
   quantum_subnet { 'public':
