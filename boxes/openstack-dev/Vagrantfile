@@ -46,9 +46,6 @@ Vagrant::Config.run do |config|
   # config.vm.share_folder "v-data", "/vagrant_data", "../data"
   config.vm.share_folder "v-infra", "/home/vagrant/infrastructure", "../.."
 
-  # Apply some patches to Puppet.
-  config.vm.provision :shell, :path => 'puppet-patch.sh'
-
   # Enable provisioning with Puppet stand alone.  Puppet manifests
   # are contained in a directory path relative to this Vagrantfile.
   # You will need to create the manifests directory and a manifest in
