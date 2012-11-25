@@ -1,3 +1,7 @@
+require 'tempfile'
+require 'tmpdir'
+require 'yaml'
+
 desc "Render README.md to HTML for preview (requires redcarpet)"
 file 'README.html' => 'README.md' do |task|
   require 'rubygems'
@@ -78,30 +82,56 @@ task :update do
 end
 
 def puppet_apply manifest, options=nil
-  command = %W{puppet apply --modulepath=#{Dir.pwd}/modules}
-  command += options unless options.nil?
-  command += %W{-e #{manifest}}
-  command.unshift 'sudo' unless Process.uid == 0
-  unless system(*command)
-    manifest = manifest.split("\n").join("\n  ")
-    raise "Could not apply the Puppet manifest:\n  #{manifest}\n" + \
-      "Command #{command.inspect} returned exit status #{$?.exitstatus}."
+  Dir.mktmpdir do |confdir|
+    command = %W{puppet apply --confdir=#{confdir} --modulepath=#{Dir.pwd}/modules}
+    command += options unless options.nil?
+    command << manifest
+    command.unshift 'sudo' unless Process.uid == 0
+
+    # Generate a Hiera configuration file.
+    hiera_config = YAML.load_file('hiera.yaml')
+    hiera_config[:yaml] ||= {}
+    hiera_config[:yaml][:datadir] = File.join(Dir.pwd, 'data')
+    f = File.new(File.join(confdir, 'hiera.yaml'), 'w')
+    f.write(hiera_config.to_yaml)
+    f.close
+
+    begin
+      unless system(*command)
+        manifest = manifest.split("\n").join("\n  ")
+        raise "Could not apply the Puppet manifest:\n  #{manifest}\n" + \
+          "Command #{command.inspect} returned exit status #{$?.exitstatus}."
+      end
+    ensure
+      command = %W{rm -rf #{confdir}/ssl}
+      command.unshift 'sudo' unless Process.uid == 0
+      system(*command)
+    end
   end
 end
 
 def puppet_apply_class puppet_class
-  puppet_apply "include #{puppet_class}"
+  f = Tempfile.new('manifest')
+  f.write "include #{puppet_class}"
+  f.close
+  puppet_apply f.path
 end
 
 namespace :puppetize do
   desc "Turn this node into a Vagrant host"
   task :host do |t|
-    puppet_apply File.read('manifests/host.pp')
+    f = Tempfile.new('manifest')
+    f.write File.read('manifests/host.pp')
+    f.close
+    puppet_apply f.path
   end
 
   namespace :host do
     task :noop do |t|
-      puppet_apply File.read('manifests/host.pp'), %w{--noop}
+      f = Tempfile.new('manifest')
+      f.write File.read('manifests/host.pp')
+      f.close
+      puppet_apply f.path, %w{--noop}
     end
   end
 

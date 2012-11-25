@@ -1,0 +1,6 @@
+---
+public_interface: eth0
+public_address: "%{ipaddress_eth0}"
+admin_email: root@localhost
+admin_password: changeme
+cinder_volumes_size: 1T
