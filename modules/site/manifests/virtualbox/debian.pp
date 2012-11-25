@@ -15,15 +15,18 @@ class site::virtualbox::debian(
 {
   if $ose {
     $package_name = 'virtualbox-ose'
+    $manage_default = true
   } else {
-    $package_name = 'virtualbox'
+    # Oracle package
+    $package_name = 'virtualbox-4.2'
+    $manage_default = false
   }
 
   package { $package_name:
     ensure => installed
   }
 
-  if $default {
+  if $manage_default and $default {
     # Manage the configuration file for the virtualbox initscript.
     file { '/etc/default/virtualbox':
       ensure  => present,
