@@ -19,10 +19,10 @@ VGNAME=<%= vgname %>
 LOOP_DEVICE=<%= loop_device %>
 IMAGE_FILE=<%= image_file %>
 IMAGE_SIZE='bs=1k seek=<%=
-  if image_size =~ /^(\d+)\s*([GMK])$/
+  if image_size =~ /^(\d+)\s*([TGMK])$/
     count = $1.to_i
     unit = $2
-    factor = { "K" => 1, "M" => 1024, "G" => 1048576 }[unit]
+    factor = { "K" => 1, "M" => 1024, "G" => 1048576, "T" => 1073741824 }[unit]
     fail "Invalid unit: #{unit}" unless factor
     count * factor
   else
