@@ -38,7 +38,7 @@ file { $iptables_conf:
 }
 
 exec { 'iptables-restore':
-  command     => "/bin/sh -c '/sbin/iptables-restore < ${iptables_conf}'",
+  command     => "/bin/sh -c '/sbin/iptables-restore -n < ${iptables_conf}'",
   refreshonly => true
 }
 
