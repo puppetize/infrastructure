@@ -1,7 +1,12 @@
 # Manage site administrator user accounts on this system.
-define site::admin_user($ensure = present, $shell = '/bin/bash',
-  $fullname = undef, $email = undef, $rsakey = undef,
-  $manage_gitconfig = true)
+define site::admin_user(
+  $authorized_keys,
+  $ensure = present,
+  $shell = '/bin/bash',
+  $email = undef,
+  $fullname = undef,
+  $manage_gitconfig = false,
+  $keystone_password = undef)
 {
   group { $name:
     ensure => $ensure
@@ -51,13 +56,9 @@ define site::admin_user($ensure = present, $shell = '/bin/bash',
         require => Package['sudo']
       }
 
-      if $rsakey {
-        ssh_authorized_key { "${name}'s RSA key for ${name}":
-          user    => $name,
-          type    => 'ssh-rsa',
-          key     => $rsakey,
-          require => File[$homedir]
-        }
+      site::admin_user::authorized_keys { $name:
+        authorized_keys => $authorized_keys,
+        require         => File[$homedir]
       }
 
       if $manage_gitconfig {
@@ -70,31 +71,29 @@ define site::admin_user($ensure = present, $shell = '/bin/bash',
         }
       }
 
-      # FIXME
-      $keystone_email = $email
-      $keystone_password = $name
+      if $keystone_password and $email {
+        @keystone_user { $name:
+          ensure   => present,
+          enabled  => 'True',
+          tenant   => $name,
+          email    => $email,
+          password => $keystone_password,
+        }
 
-      @keystone_user { $name:
-        ensure   => present,
-        enabled  => 'True',
-        tenant   => $name,
-        email    => $keystone_email,
-        password => $keystone_password,
-      }
+        @keystone_tenant { $name:
+          ensure      => present,
+          enabled     => 'True',
+          description => "${name}'s project",
+        }
 
-      @keystone_tenant { $name:
-        ensure      => present,
-        enabled     => 'True',
-        description => "${name}'s project",
-      }
-
-      @keystone_user_role { "${name}@${name}":
-        roles   => 'Member',
-        ensure  => present,
-        require => [
-          Keystone_user[$name],
-          Keystone_tenant[$name]
-        ]
+        @keystone_user_role { "${name}@${name}":
+          roles   => 'Member',
+          ensure  => present,
+          require => [
+            Keystone_user[$name],
+            Keystone_tenant[$name]
+          ]
+        }
       }
     }
 
