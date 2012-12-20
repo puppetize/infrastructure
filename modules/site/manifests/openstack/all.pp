@@ -4,7 +4,8 @@ class site::openstack::all(
   $public_address      = hiera('public_address'),
   $cinder_volumes_size = hiera('cinder_volumes_size'),
   $admin_password      = hiera('admin_password'),
-  $admin_email         = hiera('admin_email')
+  $admin_email         = hiera('admin_email'),
+  $libvirt_type        = hiera('libvirt_type')
 ) {
   class { 'site::openstack::volume_group':
     image_size => $cinder_volumes_size
@@ -13,6 +14,8 @@ class site::openstack::all(
     public_interface     => $public_interface,
     public_address       => $public_address,
     fixed_range          => '10.0.2.128/25',
+    network_vlan_ranges  => 'default:1000:1999,physical',
+    bridge_mappings      => ['default:br-virtual', 'physical:br-physical'],
 
     admin_email          => $admin_email,
     admin_password       => $admin_password,
@@ -28,7 +31,7 @@ class site::openstack::all(
     purge_nova_config    => false,
     secret_key           => 'dummy_secret_key',
 
-    libvirt_type         => 'qemu'
+    libvirt_type         => $libvirt_type
   } 
 
   # Patch /etc/libvirt/qemu.conf for use with Quantum OVS.

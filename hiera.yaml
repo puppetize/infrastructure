@@ -2,6 +2,7 @@
 :backends:
 - yaml
 :hierarchy:
+- ! '%{virtual}'
 - ! '%{fqdn}'
 - ! '%{domain}'
 - site
