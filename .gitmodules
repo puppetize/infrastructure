@@ -67,3 +67,6 @@
 [submodule "modules/xinetd"]
 	path = modules/xinetd
 	url = https://github.com/puppetlabs/puppetlabs-xinetd
+[submodule "modules/bacula"]
+	path = modules/bacula
+	url = https://github.com/puppetize/puppetlabs-bacula.git
