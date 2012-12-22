@@ -1,4 +1,4 @@
-# Install VirtualBox on a Ddebian operating system.
+# Install VirtualBox on a Debian operating system.
 #
 # == Parameters
 #
