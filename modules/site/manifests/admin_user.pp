@@ -95,6 +95,11 @@ define site::admin_user(
           ]
         }
       }
+
+      site::admin_user::backup { $name:
+        homedir => $homedir,
+        group   => $name
+      }
     }
 
     default: {

@@ -1,0 +1,11 @@
+#!/usr/bin/env ruby
+
+require 'fileutils'
+
+user = ARGV[0]
+group = ARGV[1]
+dir = ARGV[2]
+
+Dir.chdir(dir) do
+  FileUtils.chown_R user, group, Dir.entries('.') - ['.', '..']
+end

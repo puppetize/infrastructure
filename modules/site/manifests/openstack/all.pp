@@ -34,6 +34,11 @@ class site::openstack::all(
     libvirt_type         => $libvirt_type
   } 
 
+  vs_bridge { 'br-physical':
+    ensure => present,
+    before => Service['quantum-plugin-ovs-service']
+  }
+
   # Patch /etc/libvirt/qemu.conf for use with Quantum OVS.
   include site::openstack::libvirt
 

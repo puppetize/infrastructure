@@ -1,0 +1,4 @@
+  Accurate = yes
+  Replace = always
+  Client Run Before Job = "/etc/bacula/scripts/rm-rf '<%= @homedir %>'"
+  Client Run After Job = "/etc/bacula/scripts/chown-R <%= @name %> <%= @group %> '<%= @homedir %>'"

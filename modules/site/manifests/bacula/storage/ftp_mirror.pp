@@ -16,19 +16,38 @@ class site::bacula::storage::ftp_mirror(
 ) {
   # Use this this template for bacula-sd.conf if you include this class.
   $storage_template = 'site/bacula/bacula-sd.conf.erb'
+  $director_template = 'site/bacula/bacula-dir.conf.erb'
 
   # XXX: hard-coded values :(
+  $bacula_storage_dir = '/mnt/bacula/default'
   $bacula_user = 'bacula'
   $bacula_group = 'bacula'
-  $bacula_storage_dir = '/mnt/bacula/default'
+  $tape_group = 'tape'
 
-  file { '/etc/bacula/scripts/ftp-mirror':
+  package { 'lftp':
+    ensure => installed
+  }
+
+  file { '/etc/bacula/bacula-ftp-mirror.yaml':
     ensure  => present,
-    content => template('site/bacula/ftp-mirror.sh.erb'),
-    mode    => '0750',
+    content => template('site/bacula/ftp-mirror.yaml.erb'),
+    mode    => '0440',
     owner   => $bacula_user,
     group   => $bacula_group,
-    require => Class['bacula::common'],
+    require => Package['bacula-sd-sqlite3'] # XXX: Class['bacula::console']
+  }
+
+  file { '/usr/local/sbin/bacula-ftp-mirror':
+    ensure  => present,
+    source  => 'puppet:///modules/site/bacula/ftp-mirror',
+    mode    => '0555',
+    owner   => $bacula_user,
+    group   => $bacula_group,
+    require => [
+      File['/etc/bacula/bacula-ftp-mirror.yaml'],
+      Package['bacula-sd-sqlite3'], # XXX: Class['bacula::console']
+      Package['lftp']
+    ],
     before  => Service['bacula-sd']
   }
 }

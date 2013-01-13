@@ -1,0 +1,173 @@
+#!/usr/bin/env ruby
+
+require 'optparse'
+
+require 'bacula/console'
+
+class BaculaRestore < OptionParser
+  def initialize
+    super nil, 16, ''
+
+    on '--list-jobs',
+      'List backup jobs applicable for restoring on this client' do
+      @action = :list_jobs
+    end
+
+    on '--restoreclient=CLIENT',
+      'Restore to a different client instead of the local host' do |client|
+      @restoreclient = ensure_client client
+    end
+
+    @client = `hostname`.chomp.sub(/\..*/, '')
+  end
+
+  def restoreclient
+    @restoreclient || @client
+  end
+
+  def bconsole
+    @bconsole ||= Bacula::Console.new
+  end
+
+  def clients
+    @clients ||= bconsole.clients
+  end
+
+  def ensure_client(client)
+    abort "invalid client name \"#{client}\", must be one of: " +
+      clients.join(', ') unless clients.include? client
+    client
+  end
+
+  def jobs
+    @jobs ||= bconsole.jobs
+  end
+
+  def restorable_jobs
+    restorable_job_suffixes = jobs.select { |job|
+      job.start_with? "#{restoreclient}:restore:"
+    }.map { |job|
+      job.slice(("#{restoreclient}:restore:".length)..-1)
+    }
+
+    jobs.select { |job|
+      restorable_job_suffixes.any? { |suffix|
+        job.end_with? ":backup:#{suffix}"
+      }
+    }
+  end
+
+  def ensure_restorable_job(backup_job)
+    abort "invalid job name \"#{backup_job}\", must be one of: " +
+      restorable_jobs.join(', ') unless restorable_jobs.include? backup_job
+    backup_job
+  end
+
+  def restore_job_for(backup_job)
+    backup_job.sub(/^[^:]+:backup:/, "#{restoreclient}:restore:")
+  end
+
+  def job_history
+    history = []
+    record = nil
+
+    bconsole.command('llist jobs').split("\n").each do |line|
+      next unless line.index ': '
+      key, value = line.split(': ', 2)
+      key.strip!
+      value.chomp!
+
+      if key == 'JobId'
+        record = { key => value }
+        history << record
+      elsif record
+        record[key] = value
+      end
+    end
+
+    history
+  end
+
+  def restore(backup_job)
+    restore_job = restore_job_for backup_job
+
+    abort "can't restore \"#{backup_job}\" on \"#{restoreclient}\", " +
+      "because the restore job \"#{restore_job}\" is missing" unless
+      jobs.include? restore_job
+
+    last_run = job_history.select { |record|
+      record['Name'] == backup_job and
+      record['Type'] == 'B' and # sanity check
+      record['JobStatus'] == 'T'
+    }.last
+    abort "no suitable jobid found for job \"#{backup_job}\"" unless
+      last_run
+
+    puts "Restoring #{last_run['Job']} (JobId #{last_run['JobId']}) " +
+      "on #{restoreclient}"
+
+    cmdline = 'restore'
+    cmdline << %{ jobid=#{last_run['JobId']}}
+    cmdline << %{ fileset="#{last_run['FileSet']}"}
+    cmdline << %{ client="#{last_run['ClientName']}"}
+    cmdline << %{ restoreclient="#{restoreclient}"}
+    cmdline << %{ select all done yes}
+    output = bconsole.command cmdline
+
+    if output =~ /^Select Restore Job \(\d+-\d+\): $\z/
+      selection = nil
+      output.scan(/^\s+(\d+): (.*)$/) do |number, job|
+        if job == restore_job
+          selection = number
+          break
+        end
+      end
+      if selection.nil?
+        bconsole.command '.'
+        raise "couldn't find restore job \"#{restore_job}\""
+      end
+      puts "Selected restore job #{restore_job}"
+      output = bconsole.command selection
+    else
+      warn "Bacula might not have prompted for a restore job"
+    end
+
+    if output =~ /^Job queued. JobId=(\d+)$/
+      jobid = $1
+      puts "Waiting for Bacula job ##{jobid} to complete"
+      status = bconsole.wait jobid
+    else
+      abort "unexpected output from Bacula: #{output}"
+    end
+
+    if status == 'T'
+      puts "Bacula job ##{jobid} finished successfully"
+    else
+      abort "Bacula job ##{jobid} failed (status=#{status})"
+    end
+  end
+
+  def run!
+    case @action
+    when :list_jobs
+      abort "too many arguments" if ARGV.size > 0
+
+      puts restorable_jobs
+    else
+      abort "too many arguments" if ARGV.size > 1
+      abort "missing backup job name" if ARGV.size < 1
+
+      restore ensure_restorable_job(ARGV.first)
+    end
+  end
+
+  def self.run!
+    program = self.new
+    program.parse!
+    program.run!
+  end
+end
+
+if $0 == __FILE__
+  BaculaRestore.run!
+end

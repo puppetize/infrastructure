@@ -1,0 +1,13 @@
+---
+host: <%= @ftp_host %>
+user: <%= @ftp_user %>
+password: <%= @ftp_password %>
+local: <%= @bacula_storage_dir %>
+remote: <%= @ftp_directory %>
+device: FileStorage
+bacula_user: <%= @bacula_user %>
+bacula_group: <%= @bacula_group %>
+tape_group: <%= @tape_group %>
+catalog_volume_pattern: <%= @hostname %>:backup:catalog.*
+catalog_db: /var/lib/bacula/bacula.db
+catalog_sql: /var/lib/bacula/bacula.sql

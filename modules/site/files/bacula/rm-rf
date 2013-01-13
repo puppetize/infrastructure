@@ -1,0 +1,9 @@
+#!/usr/bin/env ruby
+
+require 'fileutils'
+
+dir = ARGV.first
+
+Dir.chdir(dir) do
+  FileUtils.rm_rf Dir.entries('.') - ['.', '..']
+end

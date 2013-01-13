@@ -32,8 +32,11 @@ class site::bacula(
     }
 
     $storage_template = $site::bacula::storage::ftp_mirror::storage_template
+    $director_template = $site::bacula::storage::ftp_mirror::director_template
   } else {
-    $storage_template = undef # use default template from bacula module
+    # Use default templates from "bacula" module.
+    $storage_template = undef
+    $director_template = undef
   }
 
   class { '::bacula':
@@ -45,11 +48,48 @@ class site::bacula(
     storage_template  => $storage_template,
     director_server   => $::fqdn,
     director_password => $director_password,
+    director_template => $director_template,
     console_password  => $console_password
   }
 
   if $is_director {
-    #bacula::director::job { "${::fqdn}:backup:bacula":
-    #}
+    class { 'site::bacula::director':
+      client_password => $director_password
+    }
   }
+
+  file { '/etc/bacula/scripts/rm-rf':
+    ensure  => present,
+    source  => 'puppet:///modules/site/bacula/rm-rf',
+    mode    => '0555',
+    owner   => 'root',
+    group   => 'root',
+    require => Package['bacula-sd-sqlite3'] # XXX: Class['bacula::console']
+  }
+
+  file { '/etc/bacula/scripts/chown-R':
+    ensure  => present,
+    source  => 'puppet:///modules/site/bacula/chown-R',
+    mode    => '0555',
+    owner   => 'root',
+    group   => 'root',
+    require => Package['bacula-sd-sqlite3'] # XXX: Class['bacula::console']
+  }
+
+  file { '/usr/local/lib/site_ruby/bacula':
+    ensure => directory,
+    mode   => '0444',
+    owner  => 'root',
+    group  => 'root'
+  }
+
+  file { '/usr/local/sbin/bacula-restore':
+    ensure => present,
+    source => 'puppet:///modules/site/bacula/bacula-restore',
+    mode   => '0555',
+    owner  => 'root',
+    group  => 'root'
+  }
+
+  include site::bacula::console
 }
