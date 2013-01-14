@@ -12,8 +12,16 @@ class Bacula::Console
 
     # Discard the initial output from the console.
     @pipe.puts END_OF_COMMAND
-    while line = @pipe.gets.chomp
-      break if line == END_OF_COMMAND
+    output = ''
+    while line = @pipe.gets
+      output << line
+      break if line.chomp == END_OF_COMMAND
+    end
+
+    # Check if the process is still alive.
+    if line.nil?
+      output.chomp!
+      raise "Command \"#{cmd}\" failed (output follows)\n#{output}"
     end
   end
 
