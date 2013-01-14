@@ -83,6 +83,14 @@ class site::bacula(
     group  => 'root'
   }
 
+  file { '/usr/local/sbin/bacula-backup':
+    ensure => present,
+    source => 'puppet:///modules/site/bacula/bacula-backup',
+    mode   => '0555',
+    owner  => 'root',
+    group  => 'root'
+  }
+
   file { '/usr/local/sbin/bacula-restore':
     ensure => present,
     source => 'puppet:///modules/site/bacula/bacula-restore',

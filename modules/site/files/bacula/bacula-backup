@@ -1,0 +1,159 @@
+#!/usr/bin/env ruby
+
+require 'optparse'
+
+require 'bacula/console'
+
+class BaculaBackup < OptionParser
+  def initialize
+    super nil, 16, ''
+
+    self.banner = \
+      "Usage: #{program_name} [options] --all | <job>...\n" +
+      "       #{program_name} [options] --list-jobs"
+
+    on '--all',
+      'Run all applicable backup jobs' do
+      @all = true
+    end
+
+    on '--force',
+      'Continue even on job failures' do
+      @force = true
+    end
+
+    on '--list-jobs',
+      'List backup jobs applicable for this client' do
+      @action = :list_jobs
+    end
+
+    on '--client=CLIENT',
+      'Take backups on a client other than the local host' do |client|
+      @client = ensure_client client
+    end
+
+    @all = false
+    @force = false
+    @action = nil
+    @client = `hostname`.chomp.sub(/\..*/, '')
+  end
+
+  def bconsole
+    @bconsole ||= Bacula::Console.new
+  end
+
+  def clients
+    @clients ||= bconsole.clients
+  end
+
+  def ensure_client(client)
+    abort "invalid client name \"#{client}\", must be one of: " +
+      clients.join(', ') unless clients.include? client
+    client
+  end
+
+  def jobs
+    @jobs ||= bconsole.jobs
+  end
+
+  def backup_jobs
+    jobs.select { |job|
+      job.start_with? "#{@client}:backup:"
+    }
+  end
+
+  def ensure_backup_job(job)
+    abort "invalid job name \"#{job}\", must be one of: " +
+      backup_jobs.join(', ') unless backup_jobs.include? job
+    job
+  end
+
+  def job_history
+    history = []
+    record = nil
+
+    bconsole.command('llist jobs').split("\n").each do |line|
+      next unless line.index ': '
+      key, value = line.split(': ', 2)
+      key.strip!
+      value.chomp!
+
+      if key == 'JobId'
+        record = { key => value }
+        history << record
+      elsif record
+        record[key] = value
+      end
+    end
+
+    history
+  end
+
+  def backup(job)
+    puts "Running backup job #{job}"
+    jobid = bconsole.run(job)
+
+    puts "Waiting for job ##{jobid} to complete"
+    status = bconsole.wait(jobid)
+
+    if status == 'T'
+      puts "Bacula job ##{jobid} finished successfully"
+    else
+      abort "Bacula job ##{jobid} failed (status=#{status})"
+    end
+  end
+
+  def ordered_jobs(jobs)
+    catalog_jobs = jobs.select { |job| job.end_with? ':catalog' }
+    (jobs - catalog_jobs) + catalog_jobs
+  end
+
+  def run!
+    case @action
+    when :list_jobs
+      abort "too many arguments" if ARGV.size > 0
+
+      puts backup_jobs
+    else
+      if @all
+        abort "can't specify jobs and --all" if ARGV.size > 0
+        jobs = backup_jobs
+      elsif ARGV.size < 1
+        abort "missing backup job name(s) or --all; try --list-jobs"
+      else
+        jobs = ARGV.each { |job| ensure_backup_job(job) }
+      end
+
+      # Start the catalog backup jobs last, so that the backed up catalog
+      # contains all the previous jobs.
+      jobs = ordered_jobs jobs
+
+      exitstatus = 0
+
+      jobs.each do |job|
+        begin
+          backup job
+        rescue RuntimeError => e
+          if @force
+            warn e.message
+            exitstatus = 2
+          else
+            raise
+          end
+        end
+      end
+
+      exit exitstatus
+    end
+  end
+
+  def self.run!
+    program = self.new
+    program.parse!
+    program.run!
+  end
+end
+
+if $0 == __FILE__
+  BaculaBackup.run!
+end

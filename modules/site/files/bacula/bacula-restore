@@ -8,6 +8,20 @@ class BaculaRestore < OptionParser
   def initialize
     super nil, 16, ''
 
+    self.banner = \
+      "Usage: #{program_name} [options] --all | <job>...\n" +
+      "       #{program_name} [options] --list-jobs"
+
+    on '--all',
+      'Run all applicable restore jobs' do
+      @all = true
+    end
+
+    on '--force',
+      'Continue even on job failures' do
+      @force = true
+    end
+
     on '--list-jobs',
       'List backup jobs applicable for restoring on this client' do
       @action = :list_jobs
@@ -17,6 +31,11 @@ class BaculaRestore < OptionParser
       'Restore to a different client instead of the local host' do |client|
       @restoreclient = ensure_client client
     end
+
+    @all = false
+    @force = false
+    @action = nil
+    @restoreclient = nil
 
     @client = `hostname`.chomp.sub(/\..*/, '')
   end
@@ -88,6 +107,18 @@ class BaculaRestore < OptionParser
     history
   end
 
+  def successful_runs(backup_job)
+    job_history.select { |record|
+      record['Name'] == backup_job and
+      record['Type'] == 'B' and # sanity check
+      record['JobStatus'] == 'T'
+    }
+  end
+
+  def last_successful_run(backup_job)
+    successful_runs(backup_job).last
+  end
+
   def restore(backup_job)
     restore_job = restore_job_for backup_job
 
@@ -95,13 +126,9 @@ class BaculaRestore < OptionParser
       "because the restore job \"#{restore_job}\" is missing" unless
       jobs.include? restore_job
 
-    last_run = job_history.select { |record|
-      record['Name'] == backup_job and
-      record['Type'] == 'B' and # sanity check
-      record['JobStatus'] == 'T'
-    }.last
-    abort "no suitable jobid found for job \"#{backup_job}\"" unless
-      last_run
+    unless last_run = last_successful_run(backup_job)
+      abort "no suitable jobid found for job \"#{backup_job}\""
+    end
 
     puts "Restoring #{last_run['Job']} (JobId #{last_run['JobId']}) " +
       "on #{restoreclient}"
@@ -152,12 +179,40 @@ class BaculaRestore < OptionParser
     when :list_jobs
       abort "too many arguments" if ARGV.size > 0
 
-      puts restorable_jobs
+      restorable_jobs.each do |job|
+        if last_run = last_successful_run(job)
+          last_run = last_run['Job']
+        else
+          last_run = "no previous successful run"
+        end
+        puts "#{job} (#{last_run})"
+      end
     else
-      abort "too many arguments" if ARGV.size > 1
-      abort "missing backup job name" if ARGV.size < 1
+      if @all
+        abort "can't specify jobs and --all" if ARGV.size > 0
+        jobs = restorable_jobs
+      elsif ARGV.size < 1
+        abort "missing backup job name(s) or --all; try --list-jobs"
+      else
+        jobs = ARGV.each { |job| ensure_restorable_job(job) }
+      end
 
-      restore ensure_restorable_job(ARGV.first)
+      exitstatus = 0
+
+      jobs.each do |job|
+        begin
+          restore job
+        rescue RuntimeError => e
+          if @force
+            warn e.message
+            exitstatus = 2
+          else
+            raise
+          end
+        end
+      end
+
+      exit exitstatus
     end
   end
 
