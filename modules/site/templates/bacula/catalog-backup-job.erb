@@ -1,2 +1,6 @@
   Run Before Job = "/etc/bacula/scripts/make_catalog_backup.pl p1:sqlite"
   Run After Job = "rm -f /var/lib/bacula/bacula.sql"
+
+  # Run the catalog backup after all jobs with a higher priority (default
+  # priority for normal jobs is 10).
+  Priority = 99

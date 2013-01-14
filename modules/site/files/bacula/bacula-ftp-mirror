@@ -1,0 +1,169 @@
+#!/usr/bin/env ruby
+
+require 'date'
+require 'fileutils'
+require 'optparse'
+require 'tempfile'
+require 'tmpdir'
+require 'yaml'
+
+class BaculaFtpMirror < OptionParser
+  CONFIG_FILE = '/etc/bacula/bacula-ftp-mirror.yaml'
+  CONFIG_OPTIONS = ['host', 'user', 'password', 'local', 'remote',
+    'device', 'catalog_db', 'catalog_sql', 'catalog_volume_pattern',
+    'bacula_user', 'bacula_group', 'tape_group']
+
+  def initialize
+    super
+
+    on '--list', 'List the contents of the FTP server' do
+      @action = :list
+    end
+
+    on '--sync', 'Synchronize local volumes to the FTP server' do
+      @action = :sync
+    end
+
+    on '--restore', 'Restore volumes and Bacula catalog from FTP' do
+      @action = :restore
+    end
+  end
+
+  def parse_config!(config_file = CONFIG_FILE)
+    config = YAML.load_file config_file
+    error = false
+    CONFIG_OPTIONS.each do |option|
+      if config[option]
+        instance_variable_set "@#{option}", config[option]
+      else
+        warn "missing config option: #{option}"
+        error = true
+      end
+    end
+    exit 1 if error
+  end
+
+  def lftp(command)
+    IO.popen('lftp -f /dev/stdin', 'w') do |io|
+      io.puts 'set ssl:verify-certificate no'
+      io.puts "open -u #{@user},#{@password} #{@host}"
+      io.puts command
+    end
+  end
+
+  def do_list
+    lftp "ls #{@remote}"
+  end
+
+  def do_sync
+    lftp "mirror -Re #{@local} #{@remote}"
+  end
+
+  def catalog_volumes
+    (Dir.entries(@local) - ['.', '..']).select { |volume|
+      File.fnmatch @catalog_volume_pattern, volume
+    }
+  end
+
+  def do_restore
+    # Retrieve volumes from the mirror (and delete extra files in the
+    # local filesystem).  Afterwards, we need to fix file ownership.
+    lftp "mirror -e #{@remote} #{@local}"
+    Dir.chdir @local do
+      contents = Dir.entries('.') - ['.', '..']
+      FileUtils.chown_R @bacula_user, @tape_group, contents
+    end
+
+    # Find the volume which contains the most recent catalog backup.
+    latest_volume = nil
+    latest_timestamp = nil
+
+    # Oh my, Bacula again! It won't take more than a handful of volumes
+    # to scan on the command line and just drops the rest while kindly
+    # asking us to write the list to a .bsr file... *sigh*
+    bsr = Tempfile.new('catalog.bsr')
+    begin
+      catalog_volumes.each { |volume| bsr.puts %{Volume="#{volume}"} }
+      bsr.close
+
+      IO.popen("bls -b #{bsr.path} #{@device}", 'r') do |io|
+        while not io.eof? and line = io.readline
+          if line =~ / Ready to read from volume "([^"]+)"/
+            volume = $1
+          elsif volume and line =~ /^bls JobId \d+: .* ([\d-]+ [\d:]+)  ([^\s]+)$/
+            if $2 == @catalog_sql
+              timestamp = DateTime.parse $1
+              puts "Found catalog backup in #{volume} (#{timestamp})"
+              if latest_volume.nil? or latest_timestamp < timestamp
+                latest_timestamp = timestamp
+                latest_volume = volume
+              end
+            end
+          end
+        end
+      end
+    ensure
+      bsr.unlink
+    end
+
+    if latest_volume.nil?
+      abort "no volume found containing #{@catalog_sql}"
+    end
+
+    unless system "service bacula-director stop"
+      abort "failed to stop bacula-dir!"
+    end
+
+    Dir.mktmpdir do |tmpdir|
+      puts "Extracting #{@catalog_sql} from volume \"#{latest_volume}\""
+      unless system "bextract -V #{latest_volume} #{@device} #{tmpdir} >/dev/null"
+        abort "bextract failed!"
+      end
+      FileUtils.cp File.join(tmpdir, @catalog_sql), @catalog_sql
+      FileUtils.chown @bacula_user, @bacula_group, @catalog_sql
+    end
+
+    puts "Restoring #{@catalog_db} from #{@catalog_sql}"
+    File.unlink @catalog_db if File.exists? @catalog_db
+    unless system "sqlite3 #{@catalog_db} < #{@catalog_sql}"
+      abort "sqlite3 failed!"
+    end
+    FileUtils.chown @bacula_user, @bacula_group, @catalog_db
+
+    unless system "service bacula-director start"
+      abort "failed to start bacula-dir!"
+    end
+  end
+
+  def run!
+    if ARGV.size != 0
+      $stderr.puts "#{program_name}: too many arguments"
+      $stderr.puts self
+      exit 2
+    end
+
+    case @action
+    when :list
+      do_list
+    when :sync
+      do_sync
+    when :restore
+      do_restore
+    else
+      $stderr.puts "#{program_name}: no action specified"
+      $stderr.puts self
+      exit 2
+    end
+  end
+
+  def self.run!
+     script = self.new
+     script.parse_config!
+     script.parse!
+     script.run!
+  end
+end
+
+if $0 == __FILE__
+  BaculaFtpMirror.run!
+end

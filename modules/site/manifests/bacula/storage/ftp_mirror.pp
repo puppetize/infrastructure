@@ -30,7 +30,7 @@ class site::bacula::storage::ftp_mirror(
 
   file { '/etc/bacula/bacula-ftp-mirror.yaml':
     ensure  => present,
-    content => template('site/bacula/ftp-mirror.yaml.erb'),
+    content => template('site/bacula/bacula-ftp-mirror.yaml.erb'),
     mode    => '0440',
     owner   => $bacula_user,
     group   => $bacula_group,
@@ -39,7 +39,7 @@ class site::bacula::storage::ftp_mirror(
 
   file { '/usr/local/sbin/bacula-ftp-mirror':
     ensure  => present,
-    source  => 'puppet:///modules/site/bacula/ftp-mirror',
+    source  => 'puppet:///modules/site/bacula/bacula-ftp-mirror',
     mode    => '0555',
     owner   => $bacula_user,
     group   => $bacula_group,
