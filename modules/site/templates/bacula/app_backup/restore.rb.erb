@@ -1,0 +1,292 @@
+#!/usr/bin/env ruby
+
+require 'optparse'
+require 'yaml'
+
+require 'mysql'
+
+require 'bacula/console'
+
+class SystemService
+  SERVICE = '/usr/sbin/service'
+
+  attr_reader :name
+
+  def initialize(name)
+    @name = name
+  end
+
+  def start
+    `#{SERVICE} #{@name} start`
+  end
+
+  def stop
+    `#{SERVICE} #{@name} stop`
+  end
+
+  def running?
+    `#{SERVICE} #{@name} status >/dev/null`
+  end
+end
+
+class BaculaAppRestore < OptionParser
+  DEFAULT_CONFIG_FILE = "/etc/bacula/<%= @app_name %>.yaml"
+
+  def initialize
+    super(nil, 16, '')
+
+    self.banner = "Usage: #{program_name} [options] [<client>]"
+    self.separator <<-EOS.gsub(/^    /, '')
+
+    When <client> is given on the command line, that client's
+    latest backup will be restored instead of the one created
+    on the local client.
+
+    The options are as follows:
+    EOS
+
+    on '--suspend',
+    'Remember if the application was running and shut',
+    'it down in order to do a clean restore.  Suspend',
+    'and resume should never be called manually; they',
+    'are normally invoked by Bacula as ClientRunBefore',
+    'and ClientRunAfter scripts in Bacula restore jobs.' do
+      self.action = :suspend
+    end
+
+    on '--resume',
+    'Run post-restore tasks and start the application,',
+    'if it was running before. See also --suspend.' do
+      self.action = :resume
+    end
+
+    @client = `hostname`.chomp.sub(/\..*/, '')
+  end
+
+  def action=(action)
+    if @action and @action != action
+      abort "action is #{@action}; refusing change to #{action}"
+    else
+      @action = action
+    end
+  end
+
+  def bconsole
+    @bconsole ||= Bacula::Console.new
+  end
+
+  def clients
+    @clients ||= bconsole.clients
+  end
+
+  def ensure_client(client)
+    abort "invalid client name \"#{client}\", must be one of: " +
+      clients.join(', ') unless clients.include? client
+    client
+  end
+
+  def jobs
+    @jobs ||= bconsole.jobs
+  end
+
+  def parse_config!(config_file = DEFAULT_CONFIG_FILE)
+    if File.exists? config_file
+      @config_file = config_file
+      @config = YAML.load_file config_file
+    else
+      abort "missing config file: #{config_file}"
+    end
+
+    if service_name = config_get('service_name', nil)
+      @service = SystemService.new(service_name)
+    end
+  end
+
+  def config_get(param, *args)
+    raise ArgumentError, "too many arguments" if args.size > 1
+
+    if @config.has_key? param
+      @config[param]
+    elsif args.size > 0
+      args.first
+    else
+      abort "#{@config_file}: missing parameter \"#{param}\""
+    end
+  end
+
+  def successful_runs(backup_job)
+    bconsole.job_history.select { |record|
+      record['Name'] == backup_job and
+      record['Type'] == 'B' and # sanity check
+      record['JobStatus'] == 'T'
+    }
+  end
+
+  def last_successful_run(backup_job)
+    successful_runs(backup_job).last
+  end
+
+  def job_suffix
+    config_get 'job_suffix'
+  end
+
+  def client
+    @client ||= config_get 'client'
+  end
+
+  def restoreclient
+    @restoreclient ||= config_get 'client'
+  end
+
+  def backup_job
+    "#{client}:backup:#{job_suffix}"
+  end
+
+  def restore_job
+    "#{restoreclient}:restore:#{job_suffix}"
+  end
+
+  def restore
+    abort "can't restore \"#{backup_job}\" because the restore job " +
+      "\"#{restore_job}\" is missing" unless jobs.include? restore_job
+
+    unless last_run = last_successful_run(backup_job)
+      abort "no suitable jobid found for job \"#{backup_job}\""
+    end
+
+    puts "Restoring #{last_run['Job']} (JobId #{last_run['JobId']})"
+
+    cmdline = 'restore'
+    cmdline << %{ jobid=#{last_run['JobId']}}
+    cmdline << %{ fileset="#{last_run['FileSet']}"}
+    cmdline << %{ client="#{last_run['ClientName']}"}
+    cmdline << %{ restoreclient="#{@client}"}
+    cmdline << %{ select all done yes}
+    output = bconsole.command cmdline
+
+    if output =~ /^Select Restore Job \(\d+-\d+\): $\z/
+      selection = nil
+      output.scan(/^\s+(\d+): (.*)$/) do |number, jobname| 
+        if jobname == restore_job
+          selection = number
+          break
+        end
+      end
+      if selection.nil?
+        bconsole.command '.'
+        raise "couldn't find restore job \"#{restore_job}\""
+      end
+      puts "Selected restore job #{restore_job}"
+      output = bconsole.command selection
+    else
+      warn "Bacula might not have prompted for a restore job"
+    end
+
+    if output =~ /^Job queued. JobId=(\d+)$/
+      jobid = $1
+      puts "Waiting for Bacula job ##{jobid} to complete"
+      status = bconsole.wait jobid
+    else
+      abort "unexpected output from Bacula: #{output}"
+    end
+
+    if status == 'T'
+      puts "Bacula job ##{jobid} finished successfully"
+    else
+      raise "Bacula job ##{jobid} failed (status=#{status})"
+    end
+  end
+
+  def service_cookie
+    raise "no service name defined" unless @service
+    "/tmp/#{@service.name}-was-running"
+  end
+
+  def suspend
+    return unless @service
+
+    if @service.running?
+      File.open(service_cookie, 'w').close
+      @service.stop
+    end
+  end
+
+  def resume
+    return unless @service
+
+    if File.exists? service_cookie
+      File.unlink service_cookie
+      @service.start
+    end
+  end
+
+  def run!
+    case @action
+    when nil
+      if ARGV.size == 1
+        @client = ensure_client ARGV[0]
+      elsif ARGV.size > 1
+        warn "too many arguments"
+        $stderr.puts self
+        exit 2
+      end
+
+      restore
+    when :suspend
+      if ARGV.size > 0
+        warn "too many arguments"
+        $stderr.puts self
+        exit 2
+      end
+
+      suspend
+      before_restore if respond_to? :before_restore
+    when :resume
+      if ARGV.size > 0
+        warn "too many arguments"
+        $stderr.puts self
+        exit 2
+      end
+
+      after_restore if respond_to? :after_restore
+      resume
+    else
+      raise "internal error: invalid action: #{@action.inspect}"
+    end
+
+    return 0
+  end
+
+  def self.run!
+    program = self.new
+    program.parse!
+    program.parse_config!
+    program.run!
+  end
+
+  protected
+
+  def with_database
+    begin
+      args = [
+        config_get('database_host'),
+        config_get('database_user'),
+        config_get('database_password'),
+        config_get('database_name')
+      ]
+      dbh = Mysql.new *args
+      yield dbh
+    rescue Mysql::Error => e
+      puts "Error code: #{e.errno}"
+      puts "Error message: #{e.error}"
+      puts "Error SQLSTATE: #{e.sqlstate}" if e.respond_to? :sqlstate
+    ensure
+      dbh.close if dbh
+    end
+  end
+end
+
+if $0 == __FILE__
+  exit BaculaAppRestore.run!
+end
+

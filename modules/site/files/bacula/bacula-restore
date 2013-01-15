@@ -87,24 +87,7 @@ class BaculaRestore < OptionParser
   end
 
   def job_history
-    history = []
-    record = nil
-
-    bconsole.command('llist jobs').split("\n").each do |line|
-      next unless line.index ': '
-      key, value = line.split(': ', 2)
-      key.strip!
-      value.chomp!
-
-      if key == 'JobId'
-        record = { key => value }
-        history << record
-      elsif record
-        record[key] = value
-      end
-    end
-
-    history
+    bconsole.job_history
   end
 
   def successful_runs(backup_job)

@@ -1,0 +1,10 @@
+  Include {
+    Options {
+      Compression = GZIP
+      signature = SHA1
+    }
+<% if @database_type -%>
+
+    Plugin = "bpipe:/<%= @database_type.upcase %>/<%= @database_name %>.sql:<%= @backup_database %>:<%= @restore_database %>"
+<% end -%>
+  }

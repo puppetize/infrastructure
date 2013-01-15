@@ -1,0 +1,92 @@
+#!/usr/bin/env ruby
+
+require 'optparse'
+require 'yaml'
+
+require 'bacula/console'
+
+class BaculaAppBackup < OptionParser
+  DEFAULT_CONFIG_FILE = "/etc/bacula/<%= @app_name %>.yaml"
+
+  def initialize
+    super(nil, 16, '')
+
+    self.banner = "Usage: #{program_name} [options] [<client>]"
+    self.separator <<-EOS.gsub(/^    /, '')
+
+    When <client> is given on the command line, that client will
+    run the backup instead of the local client.
+
+    EOS
+  end
+
+  def parse_config!(config_file = DEFAULT_CONFIG_FILE)
+    @config_file = config_file
+    @config = YAML.load_file config_file
+  end
+
+  def config_get(param)
+    if @config.has_key? param
+      @config[param]
+    else
+      abort "#{@config_file}: missing parameter \"#{param}\""
+    end
+  end
+
+  def client
+    @client ||= config_get 'client'
+  end
+
+  def job_suffix
+    config_get 'job_suffix'
+  end
+
+  def backup_job
+    "#{client}:backup:#{job_suffix}"
+  end
+
+  def bconsole
+    @bconsole ||= Bacula::Console.new
+  end
+
+  def clients
+    @clients ||= bconsole.clients
+  end
+
+  def ensure_client(client)
+    abort "invalid client name \"#{client}\", must be one of: " +
+      clients.join(', ') unless clients.include? client
+    client
+  end
+
+  def run!
+    if ARGV.size == 1
+      @client = ensure_client ARGV[0]
+    elsif ARGV.size > 1
+      abort "too many arguments"
+    end
+
+    puts "Running Bacula job #{backup_job}"
+    jobid = bconsole.run backup_job
+    puts "Waiting for Bacula job ##{jobid} to complete"
+    status = bconsole.wait jobid
+    if status == 'T'
+      puts "Bacula job ##{jobid} finished successfully"
+    else
+      abort "Bacula job ##{jobid} failed (status=#{status})"
+    end
+
+    return 0
+  end
+
+  def self.run!
+    program = self.new
+    program.parse!
+    program.parse_config!
+    program.run!
+  end
+end
+
+if $0 == __FILE__
+  exit BaculaAppBackup.run!
+end

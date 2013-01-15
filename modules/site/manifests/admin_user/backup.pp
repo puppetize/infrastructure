@@ -2,10 +2,11 @@ define site::admin_user::backup($homedir, $group)
 {
   $director_name = $::hostname # FIXME: use hiera
 
+  $client   = $::hostname
   $pool     = "${director_name}:pool:default"
   $storage  = "${director_name}:storage:default"
   $messages = "${director_name}:messages:standard"
-  $fileset  = "${::hostname}:fileset:home:${name}"
+  $fileset  = "${client}:fileset:home:${name}"
 
   # FIXME: use exported resources, not virtual
   @bacula::director::fileset { $fileset:
@@ -13,11 +14,11 @@ define site::admin_user::backup($homedir, $group)
   }
 
   # FIXME: use exported resources, not virtual
-  @bacula::director::job { "${::hostname}:backup:home:${name}":
-    comment  => "Backup ${homedir}",
+  @bacula::director::job { "${client}:backup:home:${name}":
+    comment  => "Backup ${name}'s home directory (${homedir})",
     type     => 'Backup',
     schedule => 'Weekly:onMonday',
-    client   => $::hostname,
+    client   => $client,
     fileset  => $fileset,
     pool     => $pool,
     storage  => $storage,
@@ -26,11 +27,11 @@ define site::admin_user::backup($homedir, $group)
   }
 
   # FIXME: use exported resources, not virtual
-  @bacula::director::job { "${::hostname}:restore:home:${name}":
-    comment  => "Backup ${homedir}",
+  @bacula::director::job { "${client}:restore:home:${name}":
+    comment  => "Restore ${name}'s home directory (${homedir})",
     type     => 'Restore',
     where    => '/',
-    client   => $::hostname,
+    client   => $client,
     fileset  => $fileset,
     pool     => $pool,
     storage  => $storage,

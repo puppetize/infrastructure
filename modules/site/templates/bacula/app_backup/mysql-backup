@@ -1,0 +1,85 @@
+#!/bin/sh
+# Write a full dump of the given MySQL database to stdout.
+#
+# Option -f forces mysqldump to continue after an error such as an
+# invalid view definition.  (The man page explains why that can be
+# useful.)
+#
+# Note that all other output to stdout must be silenced, since that
+# would cause an invalid backup to be created.
+
+set -e
+
+MYSQLDUMP=/usr/bin/mysqldump
+LOGGER=/usr/bin/logger
+
+LOGNAME=`basename $0`
+
+DATABASE_HOST='<%= @database_host %>'
+DATABASE_USER='<%= @database_user %>'
+DATABASE_PASSWORD='<%= @database_password %>'
+DATABASE_NAME='<%= @database_name %>'
+
+log()
+{
+	$LOGGER -s -t "$LOGNAME" "$@"
+}
+
+info()
+{
+	log -p user.info "$@"
+}
+
+warning()
+{
+	log -p user.warning "$@"
+}
+
+notice()
+{
+	log -p user.notice "$@"
+}
+
+alert()
+{
+	log -p user.alert "$@"
+}
+
+TMPFILE=
+
+trap_handler()
+{
+	trap '' EXIT HUP INT PIPE
+
+	if [ -n "$TMPFILE" ]
+	then
+		rm -f "$TMPFILE"
+	fi
+}
+
+trap trap_handler EXIT HUP INT PIPE
+
+TMPFILE=`mktemp` || exit $?
+
+info "Starting $MYSQLDUMP command"
+if ! $MYSQLDUMP -h"$DATABASE_HOST" -u"$DATABASE_USER" \
+    --password="$DATABASE_PASSWORD" --max_allowed_packet=1G \
+    -f --opt "$DATABASE_NAME" 2>$TMPFILE
+then
+	warning < $TMPFILE
+	warning "Command failed"
+	exit_status=1
+else
+	info < $TMPFILE
+	info "Command finished successfully"
+	exit_status=0
+fi
+
+if [ $exit_status -eq 0 ]
+then
+	info "Backup finished successfully"
+else
+	warning "Backup failed (exit status is $exit_status)"
+fi
+
+exit $exit_status

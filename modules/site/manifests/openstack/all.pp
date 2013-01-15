@@ -34,6 +34,10 @@ class site::openstack::all(
     libvirt_type         => $libvirt_type
   } 
 
+  # Evaludate the class, so that class variables of other openstack classes
+  # are available to the classes included below.
+  include ::openstack::all
+
   vs_bridge { 'br-physical':
     ensure => present,
     before => Service['quantum-plugin-ovs-service']
@@ -47,6 +51,9 @@ class site::openstack::all(
 
   # Fix the format of this file to make it pure ini-style.
   #include site::openstack::glance_api_paste_ini
+
+  # Create backup and restore jobs for all OpenStack components.
+  include site::openstack::keystone::backup
 
   # Apache is needed for the OpenStack dashboard (Horizon).
   include apache

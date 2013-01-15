@@ -1,0 +1,97 @@
+#!/bin/sh
+# Restore the MySQL database from an SQL dump.
+#
+# The SQL dump must not contain any CREATE DATABASE or USE statements,
+# so that it's possible to use different database names for backup and
+# restore.  That's why the --one-database option is passed to mysql(1).
+
+set -e
+
+MYSQL=/usr/bin/mysql
+LOGGER=/usr/bin/logger
+
+LOGNAME=`basename $0`
+
+DATABASE_HOST='<%= @database_host %>'
+DATABASE_USER='<%= @database_user %>'
+DATABASE_PASSWORD='<%= @database_password %>'
+DATABASE_NAME='<%= @database_name %>'
+
+log()
+{
+	$LOGGER -s -t "$LOGNAME" "$@"
+}
+
+info()
+{
+	log -p user.info "$@"
+}
+
+warning()
+{
+	log -p user.warning "$@"
+}
+
+notice()
+{
+	log -p user.notice "$@"
+}
+
+alert()
+{
+	log -p user.alert "$@"
+}
+
+mysql_run()
+{
+	$MYSQL -h'<%= database_host %>' -u'<%= database_user %>' \
+	    --password='<%= database_password %>' "$@"
+}
+
+TMPFILE=
+
+trap_handler()
+{
+	trap '' EXIT HUP INT PIPE
+
+	if [ -n "$TMPFILE" ]
+	then
+		rm -f "$TMPFILE"
+	fi
+}
+
+trap trap_handler EXIT HUP INT PIPE
+
+TMPFILE=`mktemp` || exit $?
+
+notice "Dropping the $DATABASE_NAME database"
+mysql_run -e 'DROP DATABASE `<%= database_name %>`' >$TMPFILE 2>&1 || :
+notice < $TMPFILE
+
+notice "Creating the $DATABASE_NAME database"
+if mysql_run -e 'CREATE DATABASE `<%= database_name %>` DEFAULT CHARSET=utf8' >$TMPFILE 2>&1
+then
+	exit_status=0
+else
+	alert < $TMPFILE
+	alert "Failed to create the $DATABASE_NAME database"
+	exit_status=1
+fi
+
+notice "Loading SQL dump into $DATABASE_NAME (this may take a while)"
+if [ $exit_status -eq 0 ] && \
+   ! mysql_run --one-database '<%= database_name %>' >$TMPFILE 2>&1
+then
+	alert < $TMPFILE
+	alert "Failed to load SQL dump into $DATABASE_NAME database"
+	exit_status=1
+fi
+
+if [ $exit_status -eq 0 ]
+then
+	info "Restore finished successfully"
+else
+	warning "Restore failed (exit status is $exit_status)"
+fi
+
+exit $exit_status

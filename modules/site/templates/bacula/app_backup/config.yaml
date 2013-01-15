@@ -1,0 +1,6 @@
+---
+client: <%= @client %>
+job_suffix: <%= @job_suffix %>
+<% if @service_name -%>
+service_name: <%= @service_name %>
+<% end -%>
