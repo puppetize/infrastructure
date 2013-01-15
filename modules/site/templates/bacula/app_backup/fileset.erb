@@ -5,6 +5,12 @@
     }
 <% if @database_type -%>
 
-    Plugin = "bpipe:/<%= @database_type.upcase %>/<%= @database_name %>.sql:<%= @backup_database %>:<%= @restore_database %>"
+    Plugin = "bpipe:/<%= @database_type.upcase %>/<%= @database_name %>.sql:<%= @db_backup %>:<%= @db_restore %>"
+<% end -%>
+<% if Array(@fileset_include).size > 0 -%>
+
+<%   Array(@fileset_include).each do |path| -%>
+    File = "<%= path %>"
+<%   end -%>
 <% end -%>
   }

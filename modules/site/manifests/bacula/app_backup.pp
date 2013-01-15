@@ -13,8 +13,18 @@
 #   uses a database.  Database backups are included in the backup/restore
 #   job definitions if *database_type* is set.  (default: +undef+)
 #
+# - *fileset_include*: additional lines for the "FileSet"'s "Include"
+#   section.  This should specify the files to back up, maybe in conjunction
+#   with *fileset_content*.
+#
 # - *fileset_content*: additional text fragment to append to the generated
 #   "FileSet" resource.  This should specify the files to back up, if any.
+#   For simple cases you should use the *fileset_include* parameter.
+#
+# - *config_params*: additional config parameters (a hash) for the backup
+#   and restore scripts.
+#
+# - *restore_script*: additional Ruby code fragment for the restore script.
 define site::bacula::app_backup(
   $app_name = $name,
   $job_suffix = $name,
@@ -24,8 +34,13 @@ define site::bacula::app_backup(
   $database_user = undef,
   $database_password = undef,
   $database_name = undef,
-  $fileset_content = ''
+  $fileset_include = [],
+  $fileset_content = '',
+  $config_params = {},
+  $restore_script = ''
 ) {
+  require site::bacula::app_backup::setup
+
   $director_name = $::hostname # FIXME: use hiera
 
   $client   = $::hostname
@@ -37,14 +52,11 @@ define site::bacula::app_backup(
   $backup_job  = "${client}:backup:${job_suffix}"
   $restore_job = "${client}:restore:${job_suffix}"
 
-  $backup_script  = "/usr/local/sbin/${app_name}-backup"
-  $restore_script = "/usr/local/sbin/${app_name}-restore"
-
   if $database_type {
-    $backup_database  = "/usr/local/sbin/${app_name}-backup-${database_type}"
-    $restore_database = "/usr/local/sbin/${app_name}-restore-${database_type}"
+    $db_backup  = "/usr/local/sbin/${app_name}-backup-${database_type}"
+    $db_restore = "/usr/local/sbin/${app_name}-restore-${database_type}"
 
-    file { $backup_database:
+    file { $db_backup:
       ensure  => present,
       content => template("site/bacula/app_backup/${database_type}-backup"),
       mode    => '0555',
@@ -52,7 +64,7 @@ define site::bacula::app_backup(
       group   => 'root'
     }
 
-    file { $restore_database:
+    file { $db_restore:
       ensure  => present,
       content => template("site/bacula/app_backup/${database_type}-restore"),
       mode    => '0555',
@@ -99,17 +111,21 @@ define site::bacula::app_backup(
     content  => template('site/bacula/app_backup/restore-job.erb')
   }
 
+  $base_params = {
+    client       => $client,
+    job_suffix   => $job_suffix,
+    service_name => $service_name
+  }
+
+  $config_yaml_content = merge($config_params, $base_params)
+
   file { $config_yaml:
     ensure  => present,
-    content => template('site/bacula/app_backup/config.yaml'),
+    content => hash_to_yaml($config_yaml_content),
     mode    => '0440',
     owner   => 'root',
     group   => 'root',
     require => Package['bacula-console']
-  }
-
-  package { 'ruby-mysql':
-    ensure => installed
   }
 
   file { $app_backup:
@@ -124,9 +140,13 @@ define site::bacula::app_backup(
     ]
   }
 
+  $app_restore_head = template('site/bacula/app_backup/restore.rb.erb')
+  $app_restore_tail = "if \$0 == __FILE__\n  exit BaculaAppRestore.run!\nend\n"
+  $app_restore_body = "${app_restore_head}${restore_script}${app_restore_tail}"
+
   file { $app_restore:
     ensure  => present,
-    content => template('site/bacula/app_backup/restore.rb.erb'),
+    content => $app_restore_body,
     mode    => '0555',
     owner   => 'root',
     group   => 'root',
