@@ -1,0 +1,44 @@
+#!/usr/bin/env ruby
+
+require 'optparse'
+
+class Script < OptionParser
+  BACKUP = '/etc/bacula/scripts/lvm-backup'
+  RESTORE = '/etc/bacula/scripts/lvm-restore'
+
+  def initialize
+    super nil, 16, ''
+
+    self.banner = "Usage: #{program_name} <volume-group>"
+  end
+
+  def run!
+    if ARGV.size != 1
+      $stderr.puts self
+      exit 2
+    end
+
+    vg = ARGV[0]
+
+    lvs = "lvs --units b --noheadings -o lv_name,lv_size #{vg}"
+
+    # We're encoing the size of the volume in the path, so that we know how
+    # big a volume we need to restore it.
+    `#{lvs}`.split("\n").each do |line|
+      lv_name, lv_size = line.split
+      lv_size = lv_size[0...-1] # strip "B" suffix
+
+      puts "bpipe:/LVM/#{vg}/#{lv_name}:#{BACKUP} #{vg} #{lv_name} #{lv_size}:#{RESTORE} #{vg} #{lv_name} #{lv_size}"
+    end
+  end
+
+  def self.run!
+    program = self.new
+    program.parse!
+    program.run!
+  end
+end
+
+if $0 == __FILE__
+  Script.run!
+end

@@ -53,6 +53,7 @@ class site::openstack::all(
   #include site::openstack::glance_api_paste_ini
 
   # Create backup and restore jobs for all OpenStack components.
+  include site::openstack::cinder::backup
   include site::openstack::glance::backup
   include site::openstack::keystone::backup
 

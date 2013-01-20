@@ -1,0 +1,69 @@
+require 'fileutils'
+
+class BaculaAppBackup
+  DEV_BACULA_DIR = '/dev/bacula/cinder-volumes'
+
+  def fileset_include
+    create_device_nodes unless Dir.exists? DEV_BACULA_DIR
+    puts Dir.glob("#{DEV_BACULA_DIR}/*")
+  end
+
+  def create_device_nodes
+    FileUtils.mkdir_p DEV_BACULA_DIR
+
+    Dir.chdir('/dev/cinder-volumes') do
+      (Dir.entries('.') - ['.', '..']).each do |volume|
+        rdev = File.stat(volume).rdev
+        major = (rdev >> 8) & 0xff
+        minor = rdev & 0xff
+
+        cmd = %{/bin/mknod #{DEV_BACULA_DIR}/#{volume} b #{major} #{minor}}
+        raise "command failed: #{cmd}" unless system cmd
+      end
+    end
+  end
+
+  def remove_device_nodes
+    FileUtils.rm_rf DEV_BACULA_DIR
+    parent_dir = File.dirname DEV_BACULA_DIR
+    FileUtils.rmdir parent_dir if Dir.entries(parent_dir).size == 2
+  end
+
+  def before_backup
+    begin
+      create_device_nodes
+    rescue RuntimeError
+      remove_device_nodes
+      raise
+    end
+  end
+
+  def after_backup
+    remove_device_nodes
+  end
+end
+
+class BaculaAppRestore
+  def fileset_include
+    [config_get('datadir')]
+  end
+
+  def before_restore
+    fileset_include.each do |path|
+      Dir.chdir(path) do
+        FileUtils.rm_rf(Dir.entries('.') - ['.', '..'])
+      end
+    end
+  end
+
+  def after_restore
+    owner = config_get 'owner'
+    group = config_get 'group'
+
+    fileset_include.each do |path|
+      Dir.chdir(path) do
+        FileUtils.chown_R(owner, group, Dir.entries('.') - ['.', '..'])
+      end
+    end
+  end
+end

@@ -1,0 +1,64 @@
+#!/usr/bin/env ruby
+
+require 'optparse'
+
+class Script < OptionParser
+  def initialize
+    super nil, 16, ''
+
+    self.banner = "Usage: #{program_name} <volume-group> <volume-name> <size>"
+  end
+
+  def lv_exists?(lv_path)
+    system "lvs #{lv_path} >/dev/null 2>&1"
+  end
+
+  def lv_busy?(lv_path)
+    system "fuser /dev/#{lv_path} >/dev/null 2>&1"
+  end
+
+  def run!
+    if ARGV.size != 3
+      $stderr.puts opts
+      exit 2
+    end
+
+    vg, lv_name, lv_size = ARGV
+
+    lv_path = "#{vg}/#{lv_name}"
+    lv_size = lv_size.to_i
+
+    if lv_exists?(lv_path) and not lv_busy?(lv_path)
+      unless system "lvremove -f #{lv_path}"
+        abort "Could not remove existing logical volume #{lv_name}"
+      end
+    end
+
+    unless lv_exists? lv_path
+      unless system "lvcreate --name #{lv_name} --size #{lv_size}b #{vg}"
+        abort "Could not create logical volume #{lv_name}"
+      end
+    else
+      cur_lv_size = `lvs --noheadings --units b -o lv_size #{lv_path}`.to_i
+      if cur_lv_size < lv_size
+        abort "Existing logical volume #{lv_name} is too small" +
+          " #{cur_lv_size} < #{lv_size}"
+      elsif cur_lv_size > lv_size
+        warn "Existing logical volume #{lv_name} is larger than backup" +
+          " #{cur_lv_size} > #{lv_size}"
+      end
+    end
+
+    exec(*%W{dd of=/dev/#{lv_path}})
+  end
+
+  def self.run!
+    program = self.new
+    program.parse!
+    program.run!
+  end
+end
+
+if $0 == __FILE__
+  Script.run!
+end

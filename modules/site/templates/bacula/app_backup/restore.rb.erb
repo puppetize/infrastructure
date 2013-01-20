@@ -206,6 +206,7 @@ class BaculaAppRestore < OptionParser
     return unless @service
 
     if @service.running?
+      puts "Stopping #{@service.name} service"
       File.open(service_cookie, 'w').close
       @service.stop
     end
@@ -215,6 +216,7 @@ class BaculaAppRestore < OptionParser
     return unless @service
 
     if File.exists? service_cookie
+      puts "Starting #{@service.name} service"
       File.unlink service_cookie
       @service.start
     end

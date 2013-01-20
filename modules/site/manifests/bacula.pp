@@ -76,6 +76,33 @@ class site::bacula(
     require => Package['bacula-sd-sqlite3'] # XXX: Class['bacula::console']
   }
 
+  file { '/etc/bacula/scripts/bpipe-lvm-vg':
+    ensure  => present,
+    source  => 'puppet:///modules/site/bacula/bpipe-lvm-vg',
+    mode    => '0555',
+    owner   => 'root',
+    group   => 'root',
+    require => Package['bacula-sd-sqlite3'] # XXX: Class['bacula::console']
+  }
+
+  file { '/etc/bacula/scripts/lvm-backup':
+    ensure  => present,
+    source  => 'puppet:///modules/site/bacula/lvm-backup',
+    mode    => '0555',
+    owner   => 'root',
+    group   => 'root',
+    require => Package['bacula-sd-sqlite3'] # XXX: Class['bacula::console']
+  }
+
+  file { '/etc/bacula/scripts/lvm-restore':
+    ensure  => present,
+    source  => 'puppet:///modules/site/bacula/lvm-restore',
+    mode    => '0555',
+    owner   => 'root',
+    group   => 'root',
+    require => Package['bacula-sd-sqlite3'] # XXX: Class['bacula::console']
+  }
+
   file { '/usr/local/lib/site_ruby/bacula':
     ensure => directory,
     mode   => '0444',

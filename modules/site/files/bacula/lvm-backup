@@ -1,0 +1,34 @@
+#!/usr/bin/env ruby
+
+require 'optparse'
+
+class Script < OptionParser
+  def initialize
+    super nil, 16, ''
+
+    self.banner = "Usage: #{program_name} <volume-group> <volume-name> <size>"
+  end
+
+  def run!
+    if ARGV.size != 3
+      $stderr.puts opts
+      exit 2
+    end
+
+    vg, lv_name, lv_size = ARGV
+
+    lv_size = :unused
+
+    exec(*%W{dd if=/dev/#{vg}/#{lv_name}})
+  end
+
+  def self.run!
+    program = self.new
+    program.parse!
+    program.run!
+  end
+end
+
+if $0 == __FILE__
+  Script.run!
+end

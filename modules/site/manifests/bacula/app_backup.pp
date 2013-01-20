@@ -21,10 +21,11 @@
 #   "FileSet" resource.  This should specify the files to back up, if any.
 #   For simple cases you should use the *fileset_include* parameter.
 #
-# - *config_params*: additional config parameters (a hash) for the backup
+# - *script_params*: additional config parameters (a hash) for the backup
 #   and restore scripts.
 #
-# - *restore_script*: additional Ruby code fragment for the restore script.
+# - *script_fragment*: additional Ruby code fragment for the backup and
+#   restore scripts.
 define site::bacula::app_backup(
   $app_name = $name,
   $job_suffix = $name,
@@ -36,8 +37,8 @@ define site::bacula::app_backup(
   $database_name = undef,
   $fileset_include = [],
   $fileset_content = '',
-  $config_params = {},
-  $restore_script = ''
+  $script_params = {},
+  $script_fragment = ''
 ) {
   require site::bacula::app_backup::setup
 
@@ -117,7 +118,7 @@ define site::bacula::app_backup(
     service_name => $service_name
   }
 
-  $config_yaml_content = merge($config_params, $base_params)
+  $config_yaml_content = merge($script_params, $base_params)
 
   file { $config_yaml:
     ensure  => present,
@@ -128,21 +129,28 @@ define site::bacula::app_backup(
     require => Package['bacula-console']
   }
 
-  file { $app_backup:
-    ensure  => present,
-    content => template('site/bacula/app_backup/backup.rb.erb'),
-    mode    => '0555',
-    owner   => 'root',
-    group   => 'root',
-    require => [
-      File[$config_yaml],
-      Class['site::bacula::console']
-    ]
-  }
+  $app_backup_head = template('site/bacula/app_backup/backup.rb.erb')
+  $app_backup_tail = "if \$0 == __FILE__\n  exit BaculaAppBackup.run!\nend\n"
+  $app_backup_body = "${app_backup_head}${script_fragment}${app_backup_tail}"
 
   $app_restore_head = template('site/bacula/app_backup/restore.rb.erb')
   $app_restore_tail = "if \$0 == __FILE__\n  exit BaculaAppRestore.run!\nend\n"
-  $app_restore_body = "${app_restore_head}${restore_script}${app_restore_tail}"
+  $app_restore_body = "${app_restore_head}${script_fragment}${app_restore_tail}"
+
+  $script_depends = [
+    File[$config_yaml],
+    Class['site::bacula::console'],
+    Package['ruby-mysql']
+  ]
+
+  file { $app_backup:
+    ensure  => present,
+    content => $app_backup_body,
+    mode    => '0555',
+    owner   => 'root',
+    group   => 'root',
+    require => $script_depends
+  }
 
   file { $app_restore:
     ensure  => present,
@@ -150,10 +158,6 @@ define site::bacula::app_backup(
     mode    => '0555',
     owner   => 'root',
     group   => 'root',
-    require => [
-      File[$config_yaml],
-      Class['site::bacula::console'],
-      Package['ruby-mysql']
-    ]
+    require => $script_depends
   }
 }

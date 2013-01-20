@@ -17,7 +17,36 @@ class BaculaAppBackup < OptionParser
     When <client> is given on the command line, that client will
     run the backup instead of the local client.
 
+    The optins are as follows:
     EOS
+
+    on '--before-backup',
+      'Called from Bacula to perform pre-backup tasks' do
+      self.action = :before_backup
+    end
+
+    on '--after-backup',
+      'Called from Bacula to perform post-backup tasks' do
+      self.action = :after_backup
+    end
+
+    if respond_to? :fileset_include
+      on '--fileset-include',
+        'Called from Bacula to generate a list of additional files',
+        'to include in the backup' do
+        self.action = :fileset_include
+      end
+    end
+
+    @action = nil
+  end
+
+  def action=(action)
+    if @action and @action != action
+      abort "action is #{@action}; refusing change to #{action}"
+    else
+      @action = action
+    end
   end
 
   def parse_config!(config_file = DEFAULT_CONFIG_FILE)
@@ -60,6 +89,12 @@ class BaculaAppBackup < OptionParser
   end
 
   def run!
+    unless @action.nil?
+      abort "too many arguments" if ARGV.size > 0
+      send @action if respond_to? @action
+      exit 0
+    end
+
     if ARGV.size == 1
       @client = ensure_client ARGV[0]
     elsif ARGV.size > 1
@@ -87,6 +122,3 @@ class BaculaAppBackup < OptionParser
   end
 end
 
-if $0 == __FILE__
-  exit BaculaAppBackup.run!
-end

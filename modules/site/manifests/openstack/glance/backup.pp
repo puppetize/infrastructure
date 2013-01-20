@@ -14,7 +14,7 @@ class site::openstack::glance::backup
 
   $datadir = $glance::backend::file::filesystem_store_datadir
 
-  $config_params = {
+  $script_params = {
     datadir => $datadir,
     owner   => 'glance',
     group   => 'glance'
@@ -29,7 +29,7 @@ class site::openstack::glance::backup
     database_password => $database_password,
     database_name     => $database_name,
     fileset_include   => $datadir,
-    config_params     => $config_params,
-    restore_script    => template('site/openstack/glance/restore.rb.erb')
+    script_params     => $script_params,
+    script_fragment   => template('site/openstack/glance/backup.rb.erb')
   }
 }

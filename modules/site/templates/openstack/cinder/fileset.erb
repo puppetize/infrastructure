@@ -1,0 +1,9 @@
+  Include {
+    Options {
+      Compression = GZIP
+      signature = SHA1
+      sparse = yes
+    }
+
+    Plugin = "\\|/etc/bacula/scripts/bpipe-lvm-vg cinder-volumes"
+  }
