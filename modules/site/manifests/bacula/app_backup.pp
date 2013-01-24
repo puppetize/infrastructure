@@ -146,7 +146,7 @@ define site::bacula::app_backup(
   file { $app_backup:
     ensure  => present,
     content => $app_backup_body,
-    mode    => '0555',
+    mode    => '0550',
     owner   => 'root',
     group   => 'root',
     require => $script_depends
@@ -155,7 +155,7 @@ define site::bacula::app_backup(
   file { $app_restore:
     ensure  => present,
     content => $app_restore_body,
-    mode    => '0555',
+    mode    => '0550',
     owner   => 'root',
     group   => 'root',
     require => $script_depends
