@@ -1,0 +1,32 @@
+require 'fileutils'
+
+class BaculaAppRestore
+  def fileset_include
+    [config_get('datadir')]
+  end
+
+  def before_restore
+    SystemService.new('quantum-dhcp-agent').stop
+    SystemService.new('quantum-plugin-openvswitch-agent').stop
+
+    fileset_include.each do |path|
+      Dir.chdir(path) do
+        FileUtils.rm_rf(Dir.entries('.') - ['.', '..'])
+      end
+    end
+  end
+
+  def after_restore
+    owner = config_get 'owner'
+    group = config_get 'group'
+
+    fileset_include.each do |path|
+      Dir.chdir(path) do
+        FileUtils.chown_R(owner, group, Dir.entries('.') - ['.', '..'])
+      end
+    end
+
+    SystemService.new('quantum-plugin-openvswitch-agent').start
+    SystemService.new('quantum-dhcp-agent').start
+  end
+end

@@ -55,6 +55,7 @@ class site::openstack::all(
   # Create backup and restore jobs for all OpenStack components.
   include site::openstack::cinder::backup
   include site::openstack::glance::backup
+  include site::openstack::quantum::backup
   include site::openstack::keystone::backup
 
   # Apache is needed for the OpenStack dashboard (Horizon).

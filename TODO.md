@@ -1,7 +1,6 @@
 OpenStack:
 
 * backup/restore for nova-compute
-* backup/restore for quantum
 * manage static routes for additional subnet
 * LVM snapshots and optional partition/filesystem-based backups
   for cinder volumes
