@@ -57,6 +57,7 @@ class site::openstack::all(
   include site::openstack::glance::backup
   include site::openstack::quantum::backup
   include site::openstack::keystone::backup
+  include site::openstack::nova::backup
 
   # Apache is needed for the OpenStack dashboard (Horizon).
   include apache

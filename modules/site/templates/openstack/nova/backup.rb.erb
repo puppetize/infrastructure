@@ -1,0 +1,43 @@
+require 'fileutils'
+
+class BaculaAppRestore
+  NOVA_SERVICES = [
+    'nova-cert',
+    'nova-objectstore',
+    'nova-api',
+    'nova-consoleauth',
+    'nova-scheduler',
+    'nova-novncproxy'
+  ]
+
+  def fileset_include
+    [config_get('datadir')]
+  end
+
+  def before_restore
+    NOVA_SERVICES.each do |service_name|
+      SystemService.new(service_name).stop
+    end
+
+    fileset_include.each do |path|
+      Dir.chdir(path) do
+        FileUtils.rm_rf(Dir.entries('.') - ['.', '..'])
+      end
+    end
+  end
+
+  def after_restore
+    owner = config_get 'owner'
+    group = config_get 'group'
+
+    fileset_include.each do |path|
+      Dir.chdir(path) do
+        FileUtils.chown_R(owner, group, Dir.entries('.') - ['.', '..'])
+      end
+    end
+
+    NOVA_SERVICES.reverse.each do |service_name|
+      SystemService.new(service_name).start
+    end
+  end
+end

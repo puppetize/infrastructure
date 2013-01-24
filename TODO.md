@@ -1,7 +1,7 @@
 OpenStack:
 
-* backup/restore for nova-compute
 * manage static routes for additional subnet
+* better backup/restore for nova-compute with respect to running instances
 * LVM snapshots and optional partition/filesystem-based backups
   for cinder volumes
 * monitoring (Nagios, etc.)
