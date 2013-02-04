@@ -1,0 +1,161 @@
+#!/usr/bin/env ruby
+
+require 'yaml'
+
+class IPTables
+  class ParseError < RuntimeError
+    def initialize(lineno, line)
+      @lineno = lineno
+      @line = line
+    end
+
+    def message
+      "Parse error in iptables-save output, line #{@lineno}: #{@line}"
+    end
+  end
+
+  def initialize
+    @tables = {}
+  end
+
+  def [](table_name)
+    @tables[table_name]
+  end
+
+  def []=(table_name, table)
+    @tables[table_name] = table
+  end
+
+  def to_restore
+    s = ''
+    @tables.each_pair do |table_name, table|
+      s << "*#{table_name}\n"
+
+      table.each_pair do |chain_name, chain|
+        s << ":#{chain_name} #{chain[:policy]} #{chain[:counts]}\n"
+      end
+
+      table.each_pair do |chain_name, chain|
+        chain[:rules].each do |rule|
+          s << "-A #{chain_name} #{rule.join ' '}\n"
+        end
+      end
+
+      s << "COMMIT\n"
+    end
+    s
+  end
+
+  def restore
+    iptables_restore = 'iptables-restore'
+
+    IO.popen(iptables_restore, 'w') do |pipe|
+      pipe.write to_restore
+    end
+  end
+
+  def self.save(table_name = nil)
+    iptables = self.new
+
+    iptables_save = 'iptables-save'
+    iptables_save << " -t #{table_name}" unless table_name.nil?
+
+    IO.popen(iptables_save, 'r') do |pipe|
+      lineno = 0
+      while not pipe.eof? and line = pipe.readline.chomp
+        lineno += 1
+
+        # end of table
+        next if line == 'COMMIT'
+
+        case line[0]
+        when '#'
+          # comment
+        when '*'
+          table = line[1..-1].split[0]
+          iptables[table] ||= {}
+        when ':'
+          # chain policy
+          chain, policy, counts = line[1..-1].split
+          iptables[table][chain] ||= {}
+          iptables[table][chain][:policy] = policy
+          iptables[table][chain][:counts] = counts
+          iptables[table][chain][:rules] ||= []
+        when '-'
+          # chain rule
+          command, chain, *rule = line.split
+          if command == '-A'
+            iptables[table][chain][:rules] << rule
+          else
+            raise ParseError.new(lineno, line)
+          end
+        else
+          raise ParseError.new(lineno, line)
+        end
+      end
+    end
+
+    iptables
+  end
+end
+
+mappings = YAML.load_file '/etc/binat.conf.yaml'
+
+iptables = IPTables.save 'nat'
+
+dnat_chain_rule = ['-j', 'binat-dnat']
+
+iptables['nat']['OUTPUT'][:rules].each do |rule|
+  if rule == dnat_chain_rule
+    # no need to insert a DNAT rule
+    dnat_chain_rule = nil
+    break
+  end
+end
+
+if dnat_chain_rule
+  # insert DNAT chaining rule at the top
+  iptables['nat']['OUTPUT'][:rules].unshift dnat_chain_rule
+end
+
+dnat_chain_rule = ['-j', 'binat-dnat']
+snat_chain_rule = ['-j', 'binat-snat']
+
+iptables['nat']['PREROUTING'][:rules].each do |rule|
+  if rule == dnat_chain_rule
+    # no need to insert a DNAT rule
+    dnat_chain_rule = nil
+    break
+  end
+end
+
+iptables['nat']['POSTROUTING'][:rules].each do |rule|
+  if rule == snat_chain_rule
+    # no need to append an SNAT rule
+    snat_chain_rule = nil
+    break
+  end
+end
+
+if dnat_chain_rule
+  # insert DNAT chaining rule at the top
+  iptables['nat']['PREROUTING'][:rules].unshift dnat_chain_rule
+end
+
+if snat_chain_rule
+  # append SNAT chaining rule at the bottom
+  iptables['nat']['POSTROUTING'][:rules].push snat_chain_rule
+end
+
+iptables['nat']['binat-dnat'] = {:policy => '-', :counts => '[0:0]', :rules => []}
+iptables['nat']['binat-snat'] = {:policy => '-', :counts => '[0:0]', :rules => []}
+
+mappings.each_pair do |external_ip, internal_ip|
+  dnat_rule = ["-d", "#{external_ip}/32", "-j", "DNAT", "--to-destination", internal_ip]
+  snat_rule = ["-s", "#{internal_ip}/32", "-j", "SNAT", "--to-source", external_ip]
+
+  iptables['nat']['binat-dnat'][:rules] << dnat_rule
+  iptables['nat']['binat-snat'][:rules] << snat_rule
+end
+
+iptables.restore
