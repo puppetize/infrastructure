@@ -8,3 +8,6 @@
 /boxes/*/*.box
 # site-specific Hiara data (except common.yaml)
 /data/*.yaml
+# puppet configuration and runtime data
+/puppet.conf
+/ssl/
