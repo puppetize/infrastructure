@@ -11,6 +11,8 @@ class BaculaAppBackup
   def create_device_nodes
     FileUtils.mkdir_p DEV_BACULA_DIR
 
+    return unless File.directory? '/dev/cinder-volumes'
+
     Dir.chdir('/dev/cinder-volumes') do
       (Dir.entries('.') - ['.', '..']).each do |volume|
         rdev = File.stat(volume).rdev
