@@ -1,0 +1,12 @@
+#!/bin/sh
+# Update the Puppet Git repository, including all submodules.  This script
+# should be called from cron to update /etc/puppet from an upstream remote
+# repository.
+
+set -e
+
+cd "`dirname \"$0\"`/.."
+
+git pull --quiet --ff-only
+git clean -ffd
+git submodule update --init >/dev/null
