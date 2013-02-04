@@ -7,6 +7,7 @@ OpenStack:
 
 * better iptables host rule management (NAT from tenant routers and host
   service access)
+* Openstack compute node cleanup (http://www.stillhq.com/openstack/000001.html)
 * SSL security (horizon, VNC, and then all the rest)
 * public IPv6 address space
 * create nova dns domains and set domain/hostname via DHCP/metadata
