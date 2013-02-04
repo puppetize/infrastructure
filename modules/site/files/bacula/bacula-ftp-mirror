@@ -66,6 +66,14 @@ class BaculaFtpMirror < OptionParser
   end
 
   def do_restore
+    unless system "service bacula-director stop"
+      abort "failed to stop bacula-dir!"
+    end
+
+    unless system "service bacula-sd stop"
+      abort "failed to stop bacula-sd!"
+    end
+
     # Retrieve volumes from the mirror (and delete extra files in the
     # local filesystem).  Afterwards, we need to fix file ownership.
     lftp "mirror -e #{@remote} #{@local}"
@@ -110,10 +118,6 @@ class BaculaFtpMirror < OptionParser
       abort "no volume found containing #{@catalog_sql}"
     end
 
-    unless system "service bacula-director stop"
-      abort "failed to stop bacula-dir!"
-    end
-
     Dir.mktmpdir do |tmpdir|
       puts "Extracting #{@catalog_sql} from volume \"#{latest_volume}\""
       unless system "bextract -V #{latest_volume} #{@device} #{tmpdir} >/dev/null"
@@ -129,6 +133,10 @@ class BaculaFtpMirror < OptionParser
       abort "sqlite3 failed!"
     end
     FileUtils.chown @bacula_user, @bacula_group, @catalog_db
+
+    unless system "service bacula-sd start"
+      abort "failed to start bacula-sd!"
+    end
 
     unless system "service bacula-director start"
       abort "failed to start bacula-dir!"
