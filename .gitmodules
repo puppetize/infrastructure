@@ -27,7 +27,7 @@
 	url = https://github.com/cprice-puppet/puppetlabs-inifile
 [submodule "modules/keystone"]
 	path = modules/keystone
-	url = https://github.com/puppetlabs/puppetlabs-keystone
+	url = https://github.com/puppetize/puppetlabs-keystone
 [submodule "modules/memcached"]
 	path = modules/memcached
 	url = https://github.com/saz/puppet-memcached
