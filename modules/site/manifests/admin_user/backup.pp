@@ -9,12 +9,12 @@ define site::admin_user::backup($homedir, $group)
   $fileset  = "${client}:fileset:home:${name}"
 
   # FIXME: use exported resources, not virtual
-  @bacula::director::fileset { $fileset:
+  @@bacula::director::fileset { $fileset:
     content => template('site/bacula/admin-user-fileset.erb')
   }
 
   # FIXME: use exported resources, not virtual
-  @bacula::director::job { "${client}:backup:home:${name}":
+  @@bacula::director::job { "${client}:backup:home:${name}":
     comment  => "Backup ${name}'s home directory (${homedir})",
     type     => 'Backup',
     schedule => 'Weekly:onMonday',
@@ -27,7 +27,7 @@ define site::admin_user::backup($homedir, $group)
   }
 
   # FIXME: use exported resources, not virtual
-  @bacula::director::job { "${client}:restore:home:${name}":
+  @@bacula::director::job { "${client}:restore:home:${name}":
     comment  => "Restore ${name}'s home directory (${homedir})",
     type     => 'Restore',
     where    => '/',

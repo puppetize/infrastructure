@@ -16,13 +16,19 @@ class site::bacula(
   $console_password      = hiera('bacula_console_password'),
   $is_director           = hiera('bacula_is_director', false),
   $director_password     = hiera('bacula_director_password'),
-  $is_storage            = hiera('bacula_is_storage', true),
+  $is_storage            = hiera('bacula_is_storage', false),
+  $director_server       = hiera('bacula_director_server'),
+  $storage_server        = hiera('bacula_storage_server', hiera('bacula_director_server')),
   $storage_ftp_mirror    = hiera('bacula_storage_ftp_mirror', false),
   $storage_ftp_host      = undef,
   $storage_ftp_user      = undef,
   $storage_ftp_password  = undef,
   $storage_ftp_directory = undef
 ) {
+  class { 'site::bacula::client':
+    password => $director_password
+  }
+
   if $is_storage and $storage_ftp_mirror {
     class { 'site::bacula::storage::ftp_mirror':
       ftp_host      => $storage_ftp_host,
@@ -44,9 +50,9 @@ class site::bacula(
     is_storage        => $is_storage,
     is_client         => true,
     manage_console    => true,
-    storage_server    => $::fqdn,
+    storage_server    => $storage_server,
     storage_template  => $storage_template,
-    director_server   => $::fqdn,
+    director_server   => $director_server,
     director_password => $director_password,
     director_template => $director_template,
     console_password  => $console_password
@@ -54,7 +60,7 @@ class site::bacula(
 
   if $is_director {
     class { 'site::bacula::director':
-      client_password => $director_password
+      # no parameters
     }
   }
 
@@ -64,7 +70,7 @@ class site::bacula(
     mode    => '0555',
     owner   => 'root',
     group   => 'root',
-    require => Package['bacula-sd-sqlite3'] # XXX: Class['bacula::console']
+    require => Class['bacula::console']
   }
 
   file { '/etc/bacula/scripts/chown-R':
@@ -73,7 +79,7 @@ class site::bacula(
     mode    => '0555',
     owner   => 'root',
     group   => 'root',
-    require => Package['bacula-sd-sqlite3'] # XXX: Class['bacula::console']
+    require => Class['bacula::console']
   }
 
   file { '/etc/bacula/scripts/bpipe-lvm-vg':
@@ -82,7 +88,7 @@ class site::bacula(
     mode    => '0555',
     owner   => 'root',
     group   => 'root',
-    require => Package['bacula-sd-sqlite3'] # XXX: Class['bacula::console']
+    require => Class['bacula::console']
   }
 
   file { '/etc/bacula/scripts/lvm-backup':
@@ -91,7 +97,7 @@ class site::bacula(
     mode    => '0555',
     owner   => 'root',
     group   => 'root',
-    require => Package['bacula-sd-sqlite3'] # XXX: Class['bacula::console']
+    require => Class['bacula::console']
   }
 
   file { '/etc/bacula/scripts/lvm-restore':
@@ -100,7 +106,7 @@ class site::bacula(
     mode    => '0555',
     owner   => 'root',
     group   => 'root',
-    require => Package['bacula-sd-sqlite3'] # XXX: Class['bacula::console']
+    require => Class['bacula::console']
   }
 
   file { '/usr/local/lib/site_ruby/bacula':

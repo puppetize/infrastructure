@@ -81,36 +81,73 @@ define site::bacula::app_backup(
   $fileset_head = template('site/bacula/app_backup/fileset.erb')
   $fileset_body = "${fileset_head}${fileset_content}"
 
-  # FIXME: use exported resources, not virtual
-  @bacula::director::fileset { $fileset:
-    content => $fileset_body
+  $exported_resources = true
+  $virtual_resources = false
+
+  if $exported_resources and $virtual_resources {
+    fail('cannot use both, exported resources and virtual resources')
   }
 
-  # FIXME: use exported resources, not virtual
-  @bacula::director::job { $backup_job:
-    comment  => "Backup \"${app_name}\" files and/or database",
-    type     => 'Backup',
-    schedule => 'Weekly:onSunday',
-    client   => $client,
-    fileset  => $fileset,
-    pool     => $pool,
-    storage  => $storage,
-    messages => $messages,
-    content  => template('site/bacula/app_backup/backup-job.erb')
+  if $exported_resources {
+    @@bacula::director::fileset { $fileset:
+      content => $fileset_body
+    }
+
+    @@bacula::director::job { $backup_job:
+      comment  => "Backup \"${app_name}\" files and/or database",
+      type     => 'Backup',
+      schedule => 'Weekly:onSunday',
+      client   => $client,
+      fileset  => $fileset,
+      pool     => $pool,
+      storage  => $storage,
+      messages => $messages,
+      content  => template('site/bacula/app_backup/backup-job.erb')
+    }
+
+    @@bacula::director::job { $restore_job:
+      comment  => "Restore \"${app_name}\" files and/or database",
+      type     => 'Restore',
+      where    => '/',
+      client   => $client,
+      fileset  => $fileset,
+      pool     => $pool,
+      storage  => $storage,
+      messages => $messages,
+      content  => template('site/bacula/app_backup/restore-job.erb')
+    }
   }
 
-  # FIXME: use exported resources, not virtual
-  @bacula::director::job { $restore_job:
-    comment  => "Restore \"${app_name}\" files and/or database",
-    type     => 'Restore',
-    where    => '/',
-    client   => $client,
-    fileset  => $fileset,
-    pool     => $pool,
-    storage  => $storage,
-    messages => $messages,
-    content  => template('site/bacula/app_backup/restore-job.erb')
+  if $virtual_resources {
+    @bacula::director::fileset { $fileset:
+      content => $fileset_body
+    }
+
+    @bacula::director::job { $backup_job:
+      comment  => "Backup \"${app_name}\" files and/or database",
+      type     => 'Backup',
+      schedule => 'Weekly:onSunday',
+      client   => $client,
+      fileset  => $fileset,
+      pool     => $pool,
+      storage  => $storage,
+      messages => $messages,
+      content  => template('site/bacula/app_backup/backup-job.erb')
+    }
+
+    @bacula::director::job { $restore_job:
+      comment  => "Restore \"${app_name}\" files and/or database",
+      type     => 'Restore',
+      where    => '/',
+      client   => $client,
+      fileset  => $fileset,
+      pool     => $pool,
+      storage  => $storage,
+      messages => $messages,
+      content  => template('site/bacula/app_backup/restore-job.erb')
+    }
   }
+
 
   $base_params = {
     client       => $client,
