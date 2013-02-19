@@ -1,0 +1,23 @@
+*filter
+:INPUT DROP [0:0]
+#:OUTPUT DROP [0:0]
+# needed because of DROP policy
+-A INPUT -p icmp -j ACCEPT 
+-A INPUT -i lo -j ACCEPT 
+-A INPUT -m state --state RELATED,ESTABLISHED -j ACCEPT 
+# SSH, HTTP/HTTPS (Horizon), Nova VNC proxy
+-A INPUT -p tcp -m tcp --dport 22 -j ACCEPT 
+-A INPUT -p tcp -m tcp --dport 80 -j ACCEPT 
+-A INPUT -p tcp -m tcp --dport 443 -j ACCEPT 
+-A INPUT -p tcp -m tcp --dport 6080 -j ACCEPT 
+# Bacula director and storage daemon, even from external!
+-A INPUT -p tcp -m tcp --dport 9101 -j ACCEPT
+-A INPUT -p tcp -m tcp --dport 9103 -j ACCEPT
+# needed because of DROP policy
+#-A OUTPUT -m state --state RELATED,ESTABLISHED -j ACCEPT 
+COMMIT
+*nat
+:POSTROUTING - [0:0]
+# Masquerade outgoing connections from gateway network.
+-A POSTROUTING -s <%= @gateway_network %> -o <%= @external_interface %> -j MASQUERADE
+COMMIT

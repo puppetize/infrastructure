@@ -77,7 +77,7 @@ class site::openstack::all(
   # acts as the external network for virtual machines.  This is so that we
   # don't have to manage multiple floating IP pools for the various public
   # IPv4 networks that we may take IP addresses out of to assign to VMs.
-  include site::iptables::binat
+  include site::iptables
 
   # Apache is needed for the OpenStack dashboard (Horizon).
   include apache

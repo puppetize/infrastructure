@@ -1,0 +1,307 @@
+#!/usr/bin/env ruby
+
+require 'logger'
+require 'optparse'
+require 'yaml'
+
+class IPTables
+  class ParseError < RuntimeError
+    attr_accessor :source
+
+    def initialize(lineno, line)
+      @source = 'iptables-save output'
+      @lineno = lineno
+      @line = line
+    end
+
+    def message
+      "Parse error in #{@source}, line #{@lineno}: #{@line}"
+    end
+  end
+
+  def initialize
+    @tables = {}
+  end
+
+  # Hash-like interface to tables
+
+  def has_table?(table_name)
+    @tables.has_key? table_name
+  end
+
+  alias :has_key? :has_table?
+
+  def each(&block)
+    @tables.each(&block)
+  end
+
+  def [](table_name)
+    @tables[table_name]
+  end
+
+  def []=(table_name, table)
+    @tables[table_name] = table
+  end
+
+  # Conversion into a string which can be fed into iptables-restore(8)
+
+  def to_s
+    s = ''
+    @tables.sort.each do |table_name, table|
+      s << "*#{table_name}\n"
+
+      table.sort.each do |chain_name, chain|
+        s << ":#{chain_name} #{chain[:policy]} #{chain[:counts]}\n"
+      end
+
+      table.sort.each do |chain_name, chain|
+        chain[:rules].each do |rule|
+          s << "-A #{chain_name} #{rule.join ' '}\n"
+        end
+      end
+
+      s << "COMMIT\n"
+    end
+    s
+  end
+
+  # Interface to iptables-save(8) and iptables-restore(8)
+
+  def restore
+    iptables_restore = 'iptables-restore'
+
+    IO.popen(iptables_restore, 'w') do |pipe|
+      pipe.write to_s
+    end
+  end
+
+  def self.save(table_name = nil)
+    iptables_save = 'iptables-save'
+    iptables_save << " -t #{table_name}" unless table_name.nil?
+
+    begin
+      self.load IO.popen(iptables_save, 'r')
+    rescue ParseError => e
+      e.source = "output of \"#{iptables_save}\""
+      raise e
+    end
+  end
+
+  # Loading from file or string in iptables-save(8) format
+
+  def self.load_file(filename)
+    begin
+      self.load File.open(filename)
+    rescue ParseError => e
+      e.source = filename
+      raise e
+    end
+  end
+
+  def self.load(io)
+    io = StringIO.new(io) if io.is_a? String
+
+    iptables = self.new
+    lineno = 0
+
+    while not io.eof? and line = io.readline.chomp
+      lineno += 1
+
+      # end of table
+      next if line == 'COMMIT'
+
+      case line.chars.first
+      when '#'
+        # comment
+      when '*'
+        table = line[1..-1].split[0]
+        iptables[table] ||= {}
+      when ':'
+        # chain policy
+        chain, policy, counts = line[1..-1].split
+        iptables[table][chain] ||= {}
+        iptables[table][chain][:policy] = policy
+        iptables[table][chain][:counts] = counts
+        iptables[table][chain][:rules] ||= []
+      when '-'
+        # chain rule
+        command, chain, *rule = line.split
+        if command == '-A'
+          iptables[table][chain][:rules] << rule
+        else
+          raise ParseError.new(lineno, line)
+        end
+      else
+        raise ParseError.new(lineno, line)
+      end
+    end
+
+    return iptables
+  end
+
+  # Deep cloning
+
+  def clone
+    other = super
+    other.instance_variable_set('@tables',
+      Marshal.load(Marshal.dump(@tables)))
+    other
+  end
+end
+
+class IPTables
+  def logger
+    @logger ||= Logger.new(STDOUT)
+  end
+
+  def logger=(logger)
+    @logger = Logger.new(STDOUT)
+  end
+
+  def merge(other)
+    other.each do |table_name, table|
+      # Add the table as a whole, if it does not already exist.
+      unless self.has_table? table_name
+        logger.info "Adding #{table_name} table"
+        self[table_name] = Marshal.load(Marshal.dump(table))
+        next
+      end
+
+      table.each do |chain_name, chain|
+        # Add the chain as a whole, if it does not already exist.
+        unless self[table_name].has_key? chain_name
+          logger.info "Adding #{table_name} chain #{chain_name}"
+          self[table_name][chain_name] = Marshal.load(Marshal.dump(chain))
+          next
+        end
+
+        # Apply policy changes to the chain.
+        if chain[:policy] != '-' and \
+          self[table_name][chain_name][:policy] != chain[:policy]
+
+          logger.info "Setting #{table_name} chain #{chain_name} policy #{chain[:policy]}"
+          self[table_name][chain_name][:policy] = chain[:policy]
+        end
+
+        # Lastly, append the rules which do not already exist.
+        chain[:rules].each do |rule|
+          unless self[table_name][chain_name][:rules].include? rule
+            logger.info "Adding #{table_name} chain #{chain_name} rule #{rule.inspect}"
+            self[table_name][chain_name][:rules].push rule.clone
+          end
+        end
+      end
+    end
+
+    self
+  end
+
+  def remove(other)
+    other.each do |table_name, table|
+      # Skip this table if it doesn't exist.
+      next unless self.has_table? table_name
+
+      table.each do |chain_name, chain|
+        # Skip this chain if it doesn't exist.
+        next unless self[table_name].has_key? chain_name
+
+        chain[:rules].each do |rule|
+          # Remove each rule which does exist.
+          if self[table_name][chain_name][:rules].include? rule
+            logger.info "Removing #{table_name} chain #{chain_name} rule #{rule.inspect}"
+            self[table_name][chain_name][:rules] -= [rule]
+          end
+        end
+      end
+    end
+
+    self
+  end
+end
+
+if $0 == __FILE__
+  options = {
+    :dump    => false,
+    :verbose => false
+  }
+
+  opts = OptionParser.new do |opts|
+    opts.banner = "Usage: #{opts.program_name} load|unload|status"
+
+    opts.on '--dump', '-d' do
+      options[:dump] = true
+    end
+
+    opts.on '--verbose', '-v' do
+      options[:verbose] = true
+    end
+  end
+
+  opts.parse!
+
+  if ARGV.size != 1
+    $stderr.puts opts
+    exit 2
+  end
+
+  iptables_conf = IPTables.load_file '/etc/iptables.conf'
+  iptables = IPTables.save
+  iptables.logger.level = Logger::ERROR unless options[:verbose]
+
+  case ARGV[0]
+  when 'status'
+    iptables.logger.level = Logger::ERROR
+
+    iptables_merged = iptables.clone
+    iptables_merged.merge iptables_conf
+
+    iptables_removed = iptables.clone
+    iptables_removed.remove iptables_conf
+
+    if iptables.to_s == iptables_merged.to_s
+      puts "Rules are loaded."
+      exit 0
+    elsif iptables.to_s == iptables_removed.to_s
+      puts "Rules are unloaded."
+      exit 3
+    else
+      require 'tempfile'
+      tmp1 = Tempfile.new('iptables.current')
+      begin
+        tmp1.write iptables
+        tmp1.close
+
+        tmp2 = Tempfile.new('iptables.merged')
+        begin
+          tmp2.write iptables_merged
+          tmp2.close
+
+          system "diff -u #{tmp1.path} #{tmp2.path}"
+        ensure
+          tmp2.close
+          tmp2.unlink
+        end
+      ensure
+        tmp1.close
+        tmp1.unlink
+      end
+      puts "Some rules are loaded."
+      exit 1
+    end
+  when 'load'
+    iptables.merge iptables_conf
+  when 'unload'
+    iptables.remove iptables_conf
+  else
+    $stderr.puts opts
+    exit 2
+  end
+
+  if options[:dump]
+    puts iptables
+    exit 0
+  end
+
+  iptables.restore
+  exit 0
+end
