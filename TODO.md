@@ -1,12 +1,6 @@
-Provisioning:
-
-* lots of disk space in /var/lib/nova for compute node (instances)
-* 500G (same as FTP backup space) volume for Bacula storage (/mnt/bacula)
-
 OpenStack:
 
-* better iptables host rule management (NAT from tenant routers and host
-  service access)
+* manage /etc/network/interfaces fragment for br-physical
 * Openstack compute node cleanup (http://www.stillhq.com/openstack/000001.html)
 * SSL security (horizon, VNC, and then all the rest)
 * public IPv6 address space
@@ -30,6 +24,7 @@ Bacula:
 
 Puppet:
 
+* PuppetDB storeconfig_backend
 * /var/lib/gems/1.9.1/gems/puppet-3.0.2/lib/puppet/provider/service/upstart.rb:67: warning: class variable access from toplevel
 * catalog version = git commit hash
 * better source for hiera data than non-versioned .yaml files
