@@ -3,23 +3,31 @@ What is this?
 
 This repository contains [Puppet](http://puppetlabs.com) manifests and
 [Vagrant](http://vagrantup.com)/[VeeWee](https://github.com/jedi4ever/veewee#readme)
-definitions for the infrastructure of [puppetize.net](http://puppetize.net).
-The goal is to use the same tools and definitions to manage multiple
-development and production environments.
+definitions for the infrastructure of [puppetize.net](http://puppetize.net),
+tipped off with a bunch of high-level [Rake](http://rake.rubyforge.org/)
+tasks that tie everything together.
 
-For example, you can make changes to the infrastructure while you're
-offline, test them on your laptop, and submit pull requests on GitHub.
-Once a change is merged, the puppetize.net infrastructure updates
-itself automatically.
+The goal is to make it extremely easy for anyone to set up and maintain
+development and production environments for the site itself (a
+[Ruby on Rails](http://rubyonrails.org/) application) and its underlying
+technology stack, such as OpenStack and Puppet.
 
-Vagrant host requirements
-=========================
+Requirements for development
+============================
 
-* VirtualBox 4.2
-* Ruby 1.8
+The only prerequisites to set up a development environment should be:
+
+* Operating system supported by Vagrant
+* Ruby
   * Rake
-  * Vagrant
-  * VeeWee
+  * RubyGems
+* [sudo](http://www.sudo.ws/) (if you're not root)
+
+The Rake tasks then take care of installing Puppet via "gem install",
+unless it is already available, because that should work across most
+operating systems.  All other dependencies beyond Puppet, like Vagrant,
+are then installed with "puppet apply" (no existing Puppet master is
+required.)
 
 Building base boxes for Vagrant
 ===============================
