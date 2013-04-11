@@ -9,6 +9,14 @@ namespace :puppetize do
     puppet_apply f.path
   end
 
+  desc "Install OpenStack as a cloud controller"
+  task :cloud do |t|
+    f = Tempfile.new('manifest')
+    f.write File.read('manifests/cloud.pp')
+    f.close
+    puppet_apply f.path
+  end
+
   namespace :host do
     task :noop do |t|
       f = Tempfile.new('manifest')

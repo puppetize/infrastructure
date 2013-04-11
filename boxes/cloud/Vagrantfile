@@ -1,0 +1,38 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+host_is_64bit = ['a'].pack('P').length > 4
+
+Vagrant::Config.run do |config|
+  # All Vagrant configuration is done here. The most common configuration
+  # options are documented and commented below. For a complete reference,
+  # please see the online documentation at vagrantup.com.
+
+  # Every Vagrant virtual environment requires a box to build off of.
+  config.vm.box = host_is_64bit ? "quantal64" : "quantal32"
+
+  # The url from where the 'config.vm.box' box will be fetched if it
+  # doesn't already exist on the user's system.
+  # config.vm.box_url = "http://domain.com/path/to/above.box"
+
+  # Boot with a GUI so you can see the screen. (Default is headless)
+  # config.vm.boot_mode = :gui
+
+  # Enable the "Hardware clock in UTC time" setting because the base
+  # image is configured to expect the hardware clock to be in UTC time,
+  # and because that's the traditional Unix way as well.
+  #
+  # See https://github.com/mitchellh/vagrant/issues/912.
+  config.vm.customize ["modifyvm", :id, "--rtcuseutc", "on"]
+
+  # Forward a port from the guest to the host, which allows for outside
+  # computers to access the VM, whereas host only networking does not.
+  config.vm.forward_port 80, 8080
+
+  # Mount the whole infrastructure as a shared folder.
+  config.vm.share_folder "v-infra", "/home/vagrant/infrastructure", "../.."
+
+  # Apply ../../manifests/cloud.pp with Hiera data from ../../data.
+  config.vm.provision :shell, :inline => \
+    'cd /home/vagrant/infrastructure && rake puppetize:cloud'
+end
