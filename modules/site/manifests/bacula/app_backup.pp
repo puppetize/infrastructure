@@ -41,6 +41,7 @@ define site::bacula::app_backup(
   $script_fragment = ''
 ) {
   require site::bacula::app_backup::setup
+  require site::bacula::console
 
   $director_name = $::hostname # FIXME: use hiera
 
@@ -81,44 +82,21 @@ define site::bacula::app_backup(
   $fileset_head = template('site/bacula/app_backup/fileset.erb')
   $fileset_body = "${fileset_head}${fileset_content}"
 
-  $exported_resources = true
-  $virtual_resources = false
-
-  if $exported_resources and $virtual_resources {
-    fail('cannot use both, exported resources and virtual resources')
-  }
-
-  if $exported_resources {
-    @@bacula::director::fileset { $fileset:
-      content => $fileset_body
+  if $::settings::storeconfigs {
+    exported_resources { $name:
+      app_name            => $app_name,
+      client              => $client,
+      schedule            => 'Weekly:onSunday',
+      storage             => $storage,
+      messages            => $messages,
+      fileset             => $fileset,
+      fileset_body        => $fileset_body,
+      backup_job          => $backup_job,
+      backup_job_content  => template('site/bacula/app_backup/backup-job.erb'),
+      restore_job         => $restore_job,
+      restore_job_content => template('site/bacula/app_backup/restore.erb')
     }
-
-    @@bacula::director::job { $backup_job:
-      comment  => "Backup \"${app_name}\" files and/or database",
-      type     => 'Backup',
-      schedule => 'Weekly:onSunday',
-      client   => $client,
-      fileset  => $fileset,
-      pool     => $pool,
-      storage  => $storage,
-      messages => $messages,
-      content  => template('site/bacula/app_backup/backup-job.erb')
-    }
-
-    @@bacula::director::job { $restore_job:
-      comment  => "Restore \"${app_name}\" files and/or database",
-      type     => 'Restore',
-      where    => '/',
-      client   => $client,
-      fileset  => $fileset,
-      pool     => $pool,
-      storage  => $storage,
-      messages => $messages,
-      content  => template('site/bacula/app_backup/restore-job.erb')
-    }
-  }
-
-  if $virtual_resources {
+  } else {
     @bacula::director::fileset { $fileset:
       content => $fileset_body
     }
@@ -147,7 +125,6 @@ define site::bacula::app_backup(
       content  => template('site/bacula/app_backup/restore-job.erb')
     }
   }
-
 
   $base_params = {
     client       => $client,
