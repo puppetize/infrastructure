@@ -1,8 +1,8 @@
 # Set up Vagrant on this system.
 #
 # Including this class ensures that the ``vagrant'' executable is
-# installed in the system.  See the *bindir* class variable to see
-# where it got installed to.
+# installed in the system.  The *bindir* class variable will be set to
+# the directory where the executable is expected to be installed.
 #
 # == Class Variables
 #
