@@ -1,5 +1,7 @@
 class site::bacula::console
 {
+  require ::bacula::console
+
   file { '/usr/local/lib/site_ruby/bacula/console.rb':
     ensure => file,
     source => 'puppet:///modules/site/bacula/console.rb',
