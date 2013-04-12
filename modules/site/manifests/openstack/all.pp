@@ -66,11 +66,11 @@ class site::openstack::all(
   #include site::openstack::glance_api_paste_ini
 
   # Create backup and restore jobs for all OpenStack components.
-  include site::openstack::cinder::backup
-  include site::openstack::glance::backup
-  include site::openstack::quantum::backup
-  include site::openstack::keystone::backup
-  include site::openstack::nova::backup
+  #include site::openstack::cinder::backup
+  #include site::openstack::glance::backup
+  #include site::openstack::quantum::backup
+  #include site::openstack::keystone::backup
+  #include site::openstack::nova::backup
 
   # Using binat here (a combination of DNAT and SNAT), mapping public IPv4
   # addresses to private IPv4 addresses from a host-only IPv4 network that
