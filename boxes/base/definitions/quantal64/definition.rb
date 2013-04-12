@@ -33,8 +33,7 @@ Veewee::Session.declare({
   :postinstall_files => [
     "postinstall.sh",
     "dist-upgrade.sh",
-    "hosts.sh",
-    "puppet-patch.sh"
+    "hosts.sh"
   ],
   :postinstall_timeout => "10000"
 })
