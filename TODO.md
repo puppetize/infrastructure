@@ -1,3 +1,8 @@
+Infrastructure:
+
+* Compare multiple operating systems in Vagrant box tests.
+* Describe the next steps, after building the base boxes.
+
 OpenStack:
 
 * manage /etc/network/interfaces fragment for br-physical
