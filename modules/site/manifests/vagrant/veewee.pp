@@ -1,6 +1,8 @@
 # Install 'veewee' extension for building base boxes from scratch.
 class site::vagrant::veewee
 {
+  require site::vagrant
+
   case $::osfamily {
     Debian: {
       $packages = [
@@ -11,20 +13,27 @@ class site::vagrant::veewee
     }
 
     default: {
-      fail("unknown operating system: ${::operatingsystem}")
+      fail("unknown operating system family: ${::osfamily}")
     }
   }
 
   package { $packages:
-    ensure => present
+    ensure => installed
+  }
+
+  # XXX: horrible hack made necessary because vagrant and fog depend
+  # on different versions of net-scp (fog needs a newer version than
+  # vagrant.)
+  package { 'fog':
+    provider => gem,
+    ensure   => '1.9.0',
+    before   => Package['veewee'],
+    require  => Package[$packages]
   }
 
   package { 'veewee':
-    ensure   => present,
     provider => gem,
-    require  => [
-      Class['site::rubygems'],
-      Package[$packages]
-    ]
+    ensure   => installed,
+    require  => Package[$packages]
   }
 }

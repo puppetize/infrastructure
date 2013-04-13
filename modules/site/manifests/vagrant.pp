@@ -12,7 +12,8 @@
 class site::vagrant
 {
   package { 'vagrant':
-    ensure => installed
+    provider => gem,
+    ensure   => installed
   }
 
   case $::operatingsystem {
@@ -20,7 +21,6 @@ class site::vagrant
       if versioncmp($::operatingsystemrelease, '7') < 0 {
         # squeeze and earlier
         Package['vagrant'] {
-          provider => gem,
           require  => Package['rubygems']
         }
 
