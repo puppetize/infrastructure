@@ -21,6 +21,8 @@ The only prerequisites to set up a development environment should be:
 * Ruby
   * Rake
   * RubyGems
+    * Vagrant 1.0.x (because more recent versions are not available as
+      a Gem and VeeWee doesn't work with newer Vagrant versions, yet)
 * [sudo](http://www.sudo.ws/) (if you're not root)
 
 The Rake tasks then take care of installing Puppet via "gem install",
