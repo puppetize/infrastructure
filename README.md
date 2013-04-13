@@ -4,8 +4,8 @@ What is this?
 This repository contains [Puppet](http://puppetlabs.com) manifests and
 [Vagrant](http://vagrantup.com)/[VeeWee](https://github.com/jedi4ever/veewee#readme)
 definitions for the infrastructure of [puppetize.net](http://puppetize.net),
-tipped off with a bunch of high-level [Rake](http://rake.rubyforge.org/)
-tasks that tie everything together.
+topped with a bunch of high-level [Rake](http://rake.rubyforge.org/) tasks
+that tie everything together.
 
 The goal is to make it extremely easy for anyone to set up and maintain
 development and production environments for the site itself (a
