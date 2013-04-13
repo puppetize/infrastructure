@@ -6,8 +6,9 @@ boxes = ['puppet']
 namespace :vagrant do
   desc "Install Vagrant and VeeWee using Puppet"
   task :install => "puppet:install" do
-    # Skip this task if a "vagrant" executable is found in PATH.
-    unless which('vagrant')
+    # Skip this task if both executables are found in PATH.
+    unless which('vagrant') and which('veewee')
+      puts "Installing Vagrant and VeeWee using Puppet (this could take a while)"
       puppet_apply_class 'site::vagrant::veewee'
     end
   end
