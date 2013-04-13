@@ -9,6 +9,11 @@ namespace :puppetize do
     puppet_apply f.path
   end
 
+  desc "Manage administrative users"
+  task :users do |t|
+    puppet_apply_class "site::admin_users"
+  end
+
   desc "Set up Puppet editor support in Vim (system-wide)"
   task :vim do |t|
     puppet_apply_class 'site::vim::puppet'
