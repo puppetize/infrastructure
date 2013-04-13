@@ -1,0 +1,12 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+load "../Vagrantfile.inc"
+
+Puppetize::Vagrant::Config::Quantal.run do |config|
+  # Test whether Vagrant and VeeWee can be installed successfully using
+  # the supplied top-level Rake task.  We cannot test whether they work,
+  # because nested virtual machines are not supported by VirtualBox.
+  config.vm.provision :shell, :inline => \
+    'cd /home/vagrant/infrastructure && rake vagrant:install'
+end
