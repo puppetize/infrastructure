@@ -1,29 +1,12 @@
 # High-level Rake tasks for the "puppetize.net" infrastructure
 
 namespace :puppetize do
-  desc "Turn this node into a Vagrant host"
-  task :host do |t|
-    f = Tempfile.new('manifest')
-    f.write File.read('manifests/host.pp')
-    f.close
-    puppet_apply f.path
-  end
-
   desc "Install OpenStack as a cloud controller"
   task :cloud do |t|
     f = Tempfile.new('manifest')
     f.write File.read('manifests/cloud.pp')
     f.close
     puppet_apply f.path
-  end
-
-  namespace :host do
-    task :noop do |t|
-      f = Tempfile.new('manifest')
-      f.write File.read('manifests/host.pp')
-      f.close
-      puppet_apply f.path, %w{--noop}
-    end
   end
 
   desc "Set up Puppet editor support in Vim (system-wide)"
