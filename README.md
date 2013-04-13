@@ -7,8 +7,8 @@ definitions for the infrastructure of [puppetize.net](http://puppetize.net),
 topped with a bunch of high-level [Rake](http://rake.rubyforge.org/) tasks
 that tie everything together.
 
-The goal is to make it extremely easy for anyone to set up and maintain
-development and production environments for the site itself (a
+The goal is to make it extremely easy for anyone to set up development
+and production environments for the site itself (a
 [Ruby on Rails](http://rubyonrails.org/) application) and its underlying
 technology stack, such as OpenStack and Puppet.
 
@@ -45,26 +45,3 @@ To save disk space, you can remove base box VMs and `.box` files
 afterwards, leaving only the installed base boxes in `~/.vagrant.d`:
 
 ``$ (cd boxes/base && rake destroy)``
-
-Setting up the Vagrant host
-===========================
-
-Install the base operating system, which for now should be Debian 6 (squeeze),
-including [Puppet](http://puppetlabs.com/puppet/what-is-puppet/).  Then clone
-this repository and run the following command in the top-level directory of
-the working copy:
-
-``$ rake puppetize:host``
-
-You could also test the same Puppet manifest in a Vagrant box (but of course,
-nested virtual machines may not work that well):
-
-``$ (cd boxes/host && vagrant up)``
-
-Supported operating systems
-===========================
-
-This infrastructure is known to work with the following operating systems:
-
-* Debian 6.0.6 (squeeze)
-  * facter 1.5.7
