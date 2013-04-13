@@ -2,7 +2,7 @@
 
 # Run a shell command as root, using "sudo" iff necessary.
 def sudo(cmdline, &block)
-  cmdline = "sudo #{cmdline}"unless Process.uid == 0
+  cmdline = "sudo -i #{cmdline}"unless Process.uid == 0
   sh cmdline, &block
 end
 
