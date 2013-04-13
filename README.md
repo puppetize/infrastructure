@@ -17,12 +17,9 @@ Requirements for development
 
 The only prerequisites to set up a development environment should be:
 
-* Operating system supported by Vagrant
 * Ruby
   * Rake
   * RubyGems
-    * Vagrant 1.0.x (because more recent versions are not available as
-      a Gem and VeeWee doesn't work with newer Vagrant versions, yet)
 * [sudo](http://www.sudo.ws/) (if you're not root)
 
 The Rake tasks then take care of installing Puppet via "gem install",
@@ -30,6 +27,13 @@ unless it is already available, because that should work across most
 operating systems.  All other dependencies beyond Puppet, like Vagrant,
 are then installed with "puppet apply" (no existing Puppet master is
 required.)
+
+Known limitations
+=================
+
+* Your operating system must be supported by Vagrant.
+* Vagrant 1.0.x, because more recent versions are not available as
+  a Gem and VeeWee doesn't work with newer Vagrant versions, yet.
 
 Building base boxes for Vagrant
 ===============================
