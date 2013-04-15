@@ -4,9 +4,13 @@ require 'spec_helper'
 
 shared_examples "OpenStack cloud controller behavior" do
 
-  it "presents login screen at /horizon" do
-    fragment = '<title>Login - OpenStack Dashboard</title>'
-    Net::HTTP.get('localhost', '/horizon', 8080).should include(fragment)
+  describe "OpenStack Dashboard" do
+
+    it "presents login screen at /horizon" do
+      fragment = '<title>Login - OpenStack Dashboard</title>'
+      Net::HTTP.get('localhost', '/horizon', 8080).should include(fragment)
+    end
+
   end
 
 end
