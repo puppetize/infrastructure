@@ -1,14 +1,12 @@
 # -*- mode: ruby -*-
 # vi: set ft=ruby :
 
-load "../Vagrantfile.inc"
+$:.unshift File.expand_path '../../../lib', __FILE__
 
-Puppetize::Vagrant::Config::Quantal.run do |config|
+require 'puppetize/vagrant/config'
+
+Puppetize::Vagrant::Config.run "puppetize:cloud" do |config|
   # Forward a port from the guest to the host, which allows for outside
   # computers to access the VM, whereas host only networking does not.
   config.vm.forward_port 80, 8080
-
-  # Apply ../../manifests/cloud.pp with Hiera data from ../../data.
-  config.vm.provision :shell, :inline => \
-    'cd /home/vagrant/infrastructure && rake puppetize:cloud'
 end
