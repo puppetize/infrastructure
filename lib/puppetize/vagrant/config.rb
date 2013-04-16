@@ -1,18 +1,23 @@
+require 'puppetize/vagrant'
+
 module Puppetize
 
   module Vagrant
 
     module Config
 
-      DEFAULT_BOX_DISTNAME = ENV['VAGRANT_DEFAULT_BOX_DISTNAME'] || 'quantal'
+      DEFAULT_BASEBOX = Puppetize::Vagrant.baseboxes_for_host.select {
+        # Use an Ubuntu distribution as the default basebox.
+        |basebox| basebox =~ /^quantal/
+      }.first
 
-      def self.run(rake_task, box_distname = DEFAULT_BOX_DISTNAME, &block)
+      BASEBOX = ENV['BASEBOX'] || DEFAULT_BASEBOX
+
+      def self.run(rake_task, basebox = BASEBOX, &block)
         ::Vagrant::Config.run do |config|
           # Every Vagrant virtual environment requires a box to build
-          # off of.  We choose an architecture here that works best with
-          # the host operating system.
-          host_is_64bit = ['a'].pack('P').length > 4
-          config.vm.box = box_distname + (host_is_64bit ? "64" : "32")
+          # off of.
+          config.vm.box = basebox
 
           # Enable the "Hardware clock in UTC time" setting because the
           # base image is configured to expect the hardware clock to be
