@@ -25,6 +25,10 @@ module Puppetize
         output
       end
 
+      def exists?
+        run('status') =~ /VM is (powered off|running)/ ? true : false
+      end
+
       def up?
         run('status') =~ /VM is running/ ? true : false
       end

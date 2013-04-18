@@ -4,7 +4,7 @@ require 'spec_helper'
 
 describe_vagrant_box "cloud", :basebox_filter => /^quantal/ do
 
-  context "with OpenStack Dashboard" do
+  context "running OpenStack Dashboard" do
 
     let(:base) { "http://localhost:8080/horizon" }
 

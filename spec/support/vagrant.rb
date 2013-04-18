@@ -36,8 +36,11 @@ def describe_vagrant_box(box, options = {}, &block)
   describe "Vagrant box '#{box}'", :slow => true do
 
     define_method(:vagrant) do |command, basebox = nil|
-      #Puppetize::Vagrant.box(box, basebox).run command
-      ''
+      Puppetize::Vagrant.box(box, basebox).run command
+    end
+
+    define_method(:vagrant_box_exists?) do
+      Puppetize::Vagrant.box(box).exists?
     end
 
     define_method(:vagrant_box_is_up?) do
@@ -47,8 +50,15 @@ def describe_vagrant_box(box, options = {}, &block)
     context "with any basebox", :basebox => :default do
 
       before :all do
-        @vagrant_box_was_up = vagrant_box_is_up?
-        vagrant "up" unless @vagrant_box_was_up
+        if vagrant_box_is_up?
+          @vagrant_box_was_up = true
+        elsif vagrant_box_exists?
+          @vagrant_box_was_up = false
+          vagrant "up --no-provision"
+        else
+          @vagrant_box_was_up = false
+          vagrant "up"
+        end
       end
 
       after :all do
