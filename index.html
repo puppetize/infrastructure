@@ -4,11 +4,11 @@
   <head>
     <meta charset='utf-8' />
     <meta http-equiv="X-UA-Compatible" content="chrome=1" />
-    <meta name="description" content="Infrastructure : Puppet manifests and Vagrant boxes for puppetize.net." />
+    <meta name="description" content="puppetize.net/infrastructure : Puppet manifests and Vagrant boxes for puppetize.net." />
 
     <link rel="stylesheet" type="text/css" media="screen" href="stylesheets/stylesheet.css">
 
-    <title>Infrastructure</title>
+    <title>puppetize.net/infrastructure</title>
   </head>
 
   <body>
@@ -18,7 +18,7 @@
         <header class="inner">
           <a id="forkme_banner" href="https://github.com/puppetize/infrastructure">View on GitHub</a>
 
-          <h1 id="project_title">Infrastructure</h1>
+          <h1 id="project_title">puppetize.net/infrastructure</h1>
           <h2 id="project_tagline">Puppet manifests and Vagrant boxes for puppetize.net.</h2>
 
             <section id="downloads">
@@ -31,39 +31,65 @@
     <!-- MAIN CONTENT -->
     <div id="main_content_wrap" class="outer">
       <section id="main_content" class="inner">
-        <h3>Welcome to GitHub Pages.</h3>
+        <h1>What is this?</h1>
 
-<p>This automatic page generator is the easiest way to create beautiful pages for all of your projects. Author your page content here using GitHub Flavored Markdown, select a template crafted by a designer, and publish. After your page is generated, you can check out the new branch:</p>
+<p>This repository contains <a href="http://puppetlabs.com">Puppet</a> manifests and
+<a href="http://vagrantup.com">Vagrant</a>/<a href="https://github.com/jedi4ever/veewee#readme">VeeWee</a>
+definitions for the infrastructure of <a href="http://puppetize.net">puppetize.net</a>,
+topped with a bunch of high-level <a href="http://rake.rubyforge.org/">Rake</a> tasks
+that tie everything together.</p>
 
-<pre><code>$ cd your_repo_root/repo_name
-$ git fetch origin
-$ git checkout gh-pages
-</code></pre>
+<p>The goal is to make it extremely easy for anyone to set up development
+and production environments for the site itself (a
+<a href="http://rubyonrails.org/">Ruby on Rails</a> application) and its underlying
+technology stack, such as OpenStack and Puppet.</p>
 
-<p>If you're using the GitHub for Mac, simply sync your repository and you'll see the new branch.</p>
+<h1>Requirements for development</h1>
 
-<h3>Designer Templates</h3>
+<p>The only prerequisites to set up a development environment should be:</p>
 
-<p>We've crafted some handsome templates for you to use. Go ahead and continue to layouts to browse through them. You can easily go back to edit your page before publishing. After publishing your page, you can revisit the page generator and switch to another theme. Your Page content will be preserved if it remained markdown format.</p>
+<ul>
+<li>Ruby
 
-<h3>Rather Drive Stick?</h3>
+<ul>
+<li>Rake</li>
+<li>RubyGems</li>
+</ul>
+</li>
+<li>
+<a href="http://www.sudo.ws/">sudo</a> (if you're not root)</li>
+</ul><p>The Rake tasks then take care of installing Puppet via "gem install",
+unless it is already available, because that should work across most
+operating systems.  All other dependencies beyond Puppet, like Vagrant,
+are then installed with "puppet apply" (no existing Puppet master is
+required.)</p>
 
-<p>If you prefer to not use the automatic generator, push a branch named <code>gh-pages</code> to your repository to create a page manually. In addition to supporting regular HTML content, GitHub Pages support Jekyll, a simple, blog aware static site generator written by our own Tom Preston-Werner. Jekyll makes it easy to create site-wide headers and footers without having to copy them across every page. It also offers intelligent blog support and other advanced templating features.</p>
+<h1>Known limitations</h1>
 
-<h3>Authors and Contributors</h3>
+<ul>
+<li>Your operating system must be supported by Vagrant.</li>
+<li>Vagrant 1.0.x, because more recent versions are not available as
+a Gem and VeeWee doesn't work with newer Vagrant versions, yet.</li>
+</ul><h1>Building base boxes for Vagrant</h1>
 
-<p>You can <a href="https://github.com/blog/821" class="user-mention">@mention</a> a GitHub username to generate a link to their profile. The resulting <code>&lt;a&gt;</code> element will link to the contributor's GitHub Profile. For example: In 2007, Chris Wanstrath (<a href="https://github.com/defunkt" class="user-mention">@defunkt</a>), PJ Hyett (<a href="https://github.com/pjhyett" class="user-mention">@pjhyett</a>), and Tom Preston-Werner (<a href="https://github.com/mojombo" class="user-mention">@mojombo</a>) founded GitHub.</p>
+<p>Before you can <code>vagrant up</code> the individual virtual machines in the
+<code>boxes/</code> subdirectory, you have to build the Vagrant base boxes.
+Execute the following command to build the required <code>.box</code> files and
+add them to your Vagrant installation (unless they exist already):</p>
 
-<h3>Support or Contact</h3>
+<p><code>$ (cd boxes/base &amp;&amp; rake install)</code></p>
 
-<p>Having trouble with Pages? Check out the documentation at <a href="http://help.github.com/pages">http://help.github.com/pages</a> or contact <a href="mailto:support@github.com">support@github.com</a> and we’ll help you sort it out.</p>
+<p>To save disk space, you can remove base box VMs and <code>.box</code> files
+afterwards, leaving only the installed base boxes in <code>~/.vagrant.d</code>:</p>
+
+<p><code>$ (cd boxes/base &amp;&amp; rake destroy)</code></p>
       </section>
     </div>
 
     <!-- FOOTER  -->
     <div id="footer_wrap" class="outer">
       <footer class="inner">
-        <p class="copyright">Infrastructure maintained by <a href="https://github.com/puppetize">puppetize</a></p>
+        <p class="copyright">puppetize.net/infrastructure maintained by <a href="https://github.com/puppetize">puppetize</a></p>
         <p>Published with <a href="http://pages.github.com">GitHub Pages</a></p>
       </footer>
     </div>
