@@ -29,9 +29,8 @@ $ git clone --recursive git@github.com:puppetize/infrastructure
 Building Baseboxes
 ------------------
 
-To using the provided Vagrant box definitions, you must have the required
-baseboxes.  They can be built using VeeWee and there is a Rake task which
-makes this a one-steop process.
+Base boxes for the included Vagrant boxes can be built using VeeWee and
+there is a Rake task which makes this a one-step process.
 
 ```
 $ (cd boxes/base && rake install)
@@ -40,10 +39,10 @@ $ (cd boxes/base && rake install)
 This will download the installation media for all supported operating
 systems, perform a non-interactive installtion, build Vagrant box
 packages (in the boxes/base directory) and install those packages into
-vagrant.
+Vagrant.
 
-Afterwards, you can free up some disk space by deleting the Vagrant box
-package files.
+You can free up some disk space afterwards by deleting the Vagrant box
+package files, or you can keep them around to install them elsewhere.
 ```
 $ (cd boxes/base && rake destroy)
 ```
@@ -51,4 +50,15 @@ $ (cd boxes/base && rake destroy)
 OpenStack Cloud Controller
 --------------------------
 
-...
+The OpenStack cloud controller includes a self-contained installation
+of OpenStack, much like [devstack](http://devstack.org/) but is entirely
+provisioned via Puppet.  The cloud controller provides Horizon, a web-based
+management interface for OpenStack at http://cloud.puppetize.net.
+
+Try it out locally by starting the "cloud" box.
+```
+$ (cd boxes/cloud && vagrant up)
+```
+
+When Vagrant is done, point your web browser at http://localhost:8080 and
+log in using the username "admin" and password "changeme".
