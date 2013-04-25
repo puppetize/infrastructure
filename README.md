@@ -100,5 +100,4 @@ Finished in 1 minute 30.5 seconds
 Continuous integration is provided by Travis CI, but is currently limited
 and doesn't include these Vagrant box tests.
 
-**Status**:
 [![Build Status](https://travis-ci.org/puppetize/infrastructure.png)](https://travis-ci.org/puppetize/infrastructure)
