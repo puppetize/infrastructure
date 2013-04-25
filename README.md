@@ -36,7 +36,7 @@ $ (cd boxes/base && rake install)
 ```
 
 This will download the installation media for all supported operating
-systems, perform a non-interactive installtion, build Vagrant box
+systems, perform a non-interactive installation, build Vagrant box
 packages (in the boxes/base directory) and install those packages into
 Vagrant.
 
