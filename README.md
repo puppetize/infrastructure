@@ -75,9 +75,9 @@ role.  Take a look and modify them, or add boxes as you wish.
 Test-Driven Development
 -----------------------
 
-Execute the main RSpec test suite using the top-level Rake task "spec".
-This will perform some testing on the important Vagrant boxes, such as
-the "cloud" box.
+Execute RSpec code examples for Vagrant boxes using the top-level task
+"spec:boxes".  This will perform some testing on the important Vagrant
+boxes, such as the "cloud" box.
 ```
 $ rake spec:boxes
 /usr/bin/ruby1.9.1 -S rspec ./spec/boxes/cloud_spec.rb ./spec/boxes/vagrant_spec.rb -c -fd
@@ -97,7 +97,6 @@ Finished in 1 minute 30.5 seconds
 3 examples, 0 failures
 ```
 
-Continuous integration is provided by Travis CI, but is currently limited
-and doesn't include these Vagrant box tests.
-
-[![Build Status](https://travis-ci.org/puppetize/infrastructure.png)](https://travis-ci.org/puppetize/infrastructure)
+Continuous integration is provided by
+[Travis CI](https://travis-ci.org/puppetize/infrastructure), but is
+currently limited as those builds don't include the Vagrant examples.
