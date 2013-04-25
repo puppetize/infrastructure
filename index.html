@@ -107,6 +107,21 @@ This will perform some testing on the important Vagrant boxes, such as
 the "cloud" box.</p>
 
 <pre><code>$ rake spec
+/usr/bin/ruby1.9.1 -S rspec ./spec/boxes/cloud_spec.rb ./spec/boxes/vagrant_spec.rb -c -fd
+Run options: exclude {:basebox=&gt;#&lt;Proc:./spec/support/vagrant.rb:8&gt;}
+
+Vagrant box 'cloud'
+  with any basebox
+    running OpenStack Dashboard
+      presents a login screen
+
+Vagrant box 'vagrant'
+  with any basebox
+    has a Vagrant 1.0.x executable in PATH
+    has a "vagrant basebox" command (VeeWee)
+
+Finished in 1 minute 30.5 seconds
+3 examples, 0 failures
 </code></pre>
       </section>
     </div>
