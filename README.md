@@ -80,8 +80,10 @@ Execute RSpec code examples for Vagrant boxes using the top-level task
 boxes, such as the "cloud" box.
 ```
 $ rake spec:boxes
-/usr/bin/ruby1.9.1 -S rspec ./spec/boxes/cloud_spec.rb ./spec/boxes/vagrant_spec.rb -c -fd
-Run options: exclude {:basebox=>#<Proc:./spec/support/vagrant.rb:8>}
+/usr/bin/ruby1.9.1 -S rspec ./spec/boxes/cloud_spec.rb ./spec/boxes/vagrant_spec.rb -c -fd -t vagrant
+Run options:
+  include {:vagrant=>true}
+  exclude {:basebox=>#<Proc:./spec/support/vagrant.rb:8>}
 
 Vagrant box 'cloud'
   with any basebox
@@ -93,7 +95,7 @@ Vagrant box 'vagrant'
     has a Vagrant 1.0.x executable in PATH
     has a "vagrant basebox" command (VeeWee)
 
-Finished in 1 minute 30.5 seconds
+Finished in 3 minutes 50.83 seconds
 3 examples, 0 failures
 ```
 
