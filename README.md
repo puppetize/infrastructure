@@ -31,7 +31,6 @@ Building Baseboxes
 
 Base boxes for the included Vagrant boxes can be built using VeeWee and
 there is a Rake task which makes this a one-step process.
-
 ```
 $ (cd boxes/base && rake install)
 ```
@@ -60,5 +59,25 @@ Try it out locally by starting the "cloud" box.
 $ (cd boxes/cloud && vagrant up)
 ```
 
-When Vagrant is done, point your web browser at http://localhost:8080 and
-log in using the username "admin" and password "changeme".
+When Vagrant has finished provisioning the box, open
+[http://localhost:8080/horizon](http://localhost:8080/horizon) in a web
+browser and log in using the username "admin" and password "changeme".
+
+Other Vagrant Boxes
+-------------------
+
+There are other Vagrant boxes in the ```boxes``` directory, such as
+"devstack", which aren't part of the main infrastructure but are used
+for development.  Each Vagrantfile normally contains the provisioning
+instructions or the name of the top-level Puppet class which defines its
+role.  Take a look and modify them, or add boxes as you wish.
+
+Test-Driven Development
+-----------------------
+
+Execute the main RSpec test suite using the top-level Rake task "spec".
+This will perform some testing on the important Vagrant boxes, such as
+the "cloud" box.
+```
+$ rake spec
+```
