@@ -59,9 +59,8 @@ repository recursively, including all referenced submodules.</p>
 
 <h2>Building Baseboxes</h2>
 
-<p>To using the provided Vagrant box definitions, you must have the required
-baseboxes.  They can be built using VeeWee and there is a Rake task which
-makes this a one-steop process.</p>
+<p>Base boxes for the included Vagrant boxes can be built using VeeWee and
+there is a Rake task which makes this a one-step process.</p>
 
 <pre><code>$ (cd boxes/base &amp;&amp; rake install)
 </code></pre>
@@ -69,17 +68,28 @@ makes this a one-steop process.</p>
 <p>This will download the installation media for all supported operating
 systems, perform a non-interactive installtion, build Vagrant box
 packages (in the boxes/base directory) and install those packages into
-vagrant.</p>
+Vagrant.</p>
 
-<p>Afterwards, you can free up some disk space by deleting the Vagrant box
-package files.</p>
+<p>You can free up some disk space afterwards by deleting the Vagrant box
+package files, or you can keep them around to install them elsewhere.</p>
 
 <pre><code>$ (cd boxes/base &amp;&amp; rake destroy)
 </code></pre>
 
 <h2>OpenStack Cloud Controller</h2>
 
-<p>...</p>
+<p>The OpenStack cloud controller includes a self-contained installation
+of OpenStack, much like <a href="http://devstack.org/">devstack</a> but is entirely
+provisioned via Puppet.  The cloud controller provides Horizon, a web-based
+management interface for OpenStack at <a href="http://cloud.puppetize.net">http://cloud.puppetize.net</a>.</p>
+
+<p>Try it out locally by starting the "cloud" box.</p>
+
+<pre><code>$ (cd boxes/cloud &amp;&amp; vagrant up)
+</code></pre>
+
+<p>When Vagrant is done, point your web browser at http://localhost:8080 and
+log in using the username "admin" and password "changeme".</p>
       </section>
     </div>
 
