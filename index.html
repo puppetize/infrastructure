@@ -31,58 +31,55 @@
     <!-- MAIN CONTENT -->
     <div id="main_content_wrap" class="outer">
       <section id="main_content" class="inner">
-        <h1>What is this?</h1>
+        <h1>About This Project</h1>
 
-<p>This repository contains <a href="http://puppetlabs.com">Puppet</a> manifests and
-<a href="http://vagrantup.com">Vagrant</a>/<a href="https://github.com/jedi4ever/veewee#readme">VeeWee</a>
-definitions for the infrastructure of <a href="http://puppetize.net">puppetize.net</a>,
-topped with a bunch of high-level <a href="http://rake.rubyforge.org/">Rake</a> tasks
-that tie everything together.</p>
+<p>The infrastructure project focuses on building the OpenStack private
+cloud that will host the online tutorial application and eventually
+the whole of <a href="http://puppetize.net">puppetize.net</a>. It builds on the
+<a href="https://github.com/puppetlabs/puppetlabs-openstack">OpenStack modules</a>
+developed by Dan Bode (<a href="https://github.com/bodepd" class="user-mention">@bodepd</a>) at PuppetLabs and includes Vagrant
+boxes and RSpec definitions for test-driven development.</p>
 
-<p>The goal is to make it extremely easy for anyone to set up development
-and production environments for the site itself (a
-<a href="http://rubyonrails.org/">Ruby on Rails</a> application) and its underlying
-technology stack, such as OpenStack and Puppet.</p>
+<p>The goal is to make it extremely easy to participate in the development
+of the site itself and its underlying technology stack, such as OpenStack
+and Puppet.</p>
 
-<h1>Requirements for development</h1>
+<h1>Getting Started</h1>
 
-<p>The only prerequisites to set up a development environment should be:</p>
+<p>Before you begin, make sure that you have
+<a href="http://vagrantup.com">Vagrant</a>,
+<a href="https://github.com/jedi4ever/veewee">VeeWee</a> and
+<a href="http://rake.rubyforge.org/">Rake</a> installed and working.</p>
 
-<ul>
-<li>Ruby
+<p>Clone the <a href="https://github.com/puppetize/infrastructure">infrastructure</a>
+repository recursively, including all referenced submodules.</p>
 
-<ul>
-<li>Rake</li>
-<li>RubyGems</li>
-</ul>
-</li>
-<li>
-<a href="http://www.sudo.ws/">sudo</a> (if you're not root)</li>
-</ul><p>The Rake tasks then take care of installing Puppet via "gem install",
-unless it is already available, because that should work across most
-operating systems.  All other dependencies beyond Puppet, like Vagrant,
-are then installed with "puppet apply" (no existing Puppet master is
-required.)</p>
+<pre><code>$ git clone --recursive git@github.com:puppetize/infrastructure
+</code></pre>
 
-<h1>Known limitations</h1>
+<h2>Building Baseboxes</h2>
 
-<ul>
-<li>Your operating system must be supported by Vagrant.</li>
-<li>Vagrant 1.0.x, because more recent versions are not available as
-a Gem and VeeWee doesn't work with newer Vagrant versions, yet.</li>
-</ul><h1>Building base boxes for Vagrant</h1>
+<p>To using the provided Vagrant box definitions, you must have the required
+baseboxes.  They can be built using VeeWee and there is a Rake task which
+makes this a one-steop process.</p>
 
-<p>Before you can <code>vagrant up</code> the individual virtual machines in the
-<code>boxes/</code> subdirectory, you have to build the Vagrant base boxes.
-Execute the following command to build the required <code>.box</code> files and
-add them to your Vagrant installation (unless they exist already):</p>
+<pre><code>$ (cd boxes/base &amp;&amp; rake install)
+</code></pre>
 
-<p><code>$ (cd boxes/base &amp;&amp; rake install)</code></p>
+<p>This will download the installation media for all supported operating
+systems, perform a non-interactive installtion, build Vagrant box
+packages (in the boxes/base directory) and install those packages into
+vagrant.</p>
 
-<p>To save disk space, you can remove base box VMs and <code>.box</code> files
-afterwards, leaving only the installed base boxes in <code>~/.vagrant.d</code>:</p>
+<p>Afterwards, you can free up some disk space by deleting the Vagrant box
+package files.</p>
 
-<p><code>$ (cd boxes/base &amp;&amp; rake destroy)</code></p>
+<pre><code>$ (cd boxes/base &amp;&amp; rake destroy)
+</code></pre>
+
+<h2>OpenStack Cloud Controller</h2>
+
+<p>...</p>
       </section>
     </div>
 
