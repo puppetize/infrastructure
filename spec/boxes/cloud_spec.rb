@@ -10,7 +10,17 @@ describe_vagrant_box "cloud", :basebox_filter => /^quantal/ do
 
     def get(path)
       uri = URI.parse(base)
-      Net::HTTP.get(uri.host, uri.path + path, uri.port)
+      tries = 50
+      begin
+        Net::HTTP.get(uri.host, uri.path + path, uri.port)
+      rescue Errno::ECONNRESET
+        tries -= 1
+        if tries > 0
+          sleep 0.2
+          retry
+        end
+        raise
+      end
     end
 
     it "presents a login screen" do
