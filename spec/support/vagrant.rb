@@ -35,7 +35,8 @@ def describe_vagrant_box(box, options = {}, &block)
 
   describe "Vagrant box '#{box}'", :slow => true do
 
-    define_method(:vagrant) do |command, basebox = nil|
+    define_method(:vagrant) do |command, *args|
+      basebox = args.first
       Puppetize::Vagrant.box(box, basebox).run command
     end
 
