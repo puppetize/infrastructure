@@ -33,7 +33,7 @@ def describe_vagrant_box(box, options = {}, &block)
     end
   }
 
-  describe "Vagrant box '#{box}'", :slow => true do
+  describe "Vagrant box '#{box}'", :vagrant => true do
 
     define_method(:vagrant) do |command, *args|
       basebox = args.first

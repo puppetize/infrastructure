@@ -79,7 +79,7 @@ Execute the main RSpec test suite using the top-level Rake task "spec".
 This will perform some testing on the important Vagrant boxes, such as
 the "cloud" box.
 ```
-$ rake spec
+$ rake spec:boxes
 /usr/bin/ruby1.9.1 -S rspec ./spec/boxes/cloud_spec.rb ./spec/boxes/vagrant_spec.rb -c -fd
 Run options: exclude {:basebox=>#<Proc:./spec/support/vagrant.rb:8>}
 
