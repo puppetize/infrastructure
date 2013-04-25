@@ -1,51 +1,54 @@
-What is this?
-=============
+About This Project
+==================
 
-This repository contains [Puppet](http://puppetlabs.com) manifests and
-[Vagrant](http://vagrantup.com)/[VeeWee](https://github.com/jedi4ever/veewee#readme)
-definitions for the infrastructure of [puppetize.net](http://puppetize.net),
-topped with a bunch of high-level [Rake](http://rake.rubyforge.org/) tasks
-that tie everything together.
+The infrastructure project focuses on building the OpenStack private
+cloud that will host the online tutorial application and eventually
+the whole of [puppetize.net](http://puppetize.net). It builds on the
+[OpenStack modules](https://github.com/puppetlabs/puppetlabs-openstack)
+developed by Dan Bode (@bodepd) at PuppetLabs and includes Vagrant
+boxes and RSpec definitions for test-driven development.
 
-The goal is to make it extremely easy for anyone to set up development
-and production environments for the site itself (a
-[Ruby on Rails](http://rubyonrails.org/) application) and its underlying
-technology stack, such as OpenStack and Puppet.
+The goal is to make it extremely easy to participate in the development
+of the site itself and its underlying technology stack, such as OpenStack
+and Puppet.
 
-Requirements for development
-============================
+Getting Started
+===============
 
-The only prerequisites to set up a development environment should be:
+Before you begin, make sure that you have
+[Vagrant](http://vagrantup.com),
+[VeeWee](https://github.com/jedi4ever/veewee) and
+[Rake](http://rake.rubyforge.org/) installed and working.
 
-* Ruby
-  * Rake
-  * RubyGems
-* [sudo](http://www.sudo.ws/) (if you're not root)
+Clone the [infrastructure](https://github.com/puppetize/infrastructure)
+repository recursively, including all referenced submodules.
+```
+$ git clone --recursive git@github.com:puppetize/infrastructure
+```
 
-The Rake tasks then take care of installing Puppet via "gem install",
-unless it is already available, because that should work across most
-operating systems.  All other dependencies beyond Puppet, like Vagrant,
-are then installed with "puppet apply" (no existing Puppet master is
-required.)
+Building Baseboxes
+------------------
 
-Known limitations
-=================
+To using the provided Vagrant box definitions, you must have the required
+baseboxes.  They can be built using VeeWee and there is a Rake task which
+makes this a one-steop process.
 
-* Your operating system must be supported by Vagrant.
-* Vagrant 1.0.x, because more recent versions are not available as
-  a Gem and VeeWee doesn't work with newer Vagrant versions, yet.
+```
+$ (cd boxes/base && rake install)
+```
 
-Building base boxes for Vagrant
-===============================
+This will download the installation media for all supported operating
+systems, perform a non-interactive installtion, build Vagrant box
+packages (in the boxes/base directory) and install those packages into
+vagrant.
 
-Before you can `vagrant up` the individual virtual machines in the
-`boxes/` subdirectory, you have to build the Vagrant base boxes.
-Execute the following command to build the required `.box` files and
-add them to your Vagrant installation (unless they exist already):
+Afterwards, you can free up some disk space by deleting the Vagrant box
+package files.
+```
+$ (cd boxes/base && rake destroy)
+```
 
-``$ (cd boxes/base && rake install)``
+OpenStack Cloud Controller
+--------------------------
 
-To save disk space, you can remove base box VMs and `.box` files
-afterwards, leaving only the installed base boxes in `~/.vagrant.d`:
-
-``$ (cd boxes/base && rake destroy)``
+...
