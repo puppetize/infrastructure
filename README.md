@@ -67,7 +67,7 @@ Other Vagrant Boxes
 -------------------
 
 There are other Vagrant boxes in the ```boxes``` directory, such as
-"devstack", which aren't part of the main infrastructure but are used
+"vagrant", which aren't part of the main infrastructure but are used
 for development.  Each Vagrantfile normally contains the provisioning
 instructions or the name of the top-level Puppet class which defines its
 role.  Take a look and modify them, or add boxes as you wish.
